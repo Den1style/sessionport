@@ -1,5 +1,5 @@
 ﻿/**
- * SessionPort — db.js  v1.2.9
+ * SessionPort — db.js  v1.0
  * IndexedDB module. Extension origin only (background.js, popup).
  * DO NOT import from content.js.
  *

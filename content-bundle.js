@@ -1,5 +1,5 @@
 ﻿/**
- * SessionPort — content-bundle.js  v1.2.39
+ * SessionPort — content-bundle.js  v1.0
  *
  * Статус платформ:
  *   ✅ Claude      — захват + вставка контекста + файлы

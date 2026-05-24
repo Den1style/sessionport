@@ -1,5 +1,5 @@
 ﻿/**
- * SessionPort v1.2.35 — Background Service Worker
+ * SessionPort v1.0 — Background Service Worker
  * db.js is inlined below (no importScripts — avoids MV3 SW restart issues).
  */
 
