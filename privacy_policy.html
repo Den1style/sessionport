@@ -1,0 +1,72 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SessionPort — Privacy Policy</title>
+  <style>
+    body { font-family: system-ui, -apple-system, sans-serif; max-width: 720px; margin: 48px auto; padding: 0 24px; color: #1f2937; line-height: 1.7; }
+    h1 { font-size: 24px; font-weight: 700; color: #111827; margin-bottom: 4px; }
+    .updated { font-size: 13px; color: #6b7280; margin-bottom: 36px; }
+    h2 { font-size: 16px; font-weight: 600; color: #111827; margin-top: 32px; margin-bottom: 8px; }
+    p, li { font-size: 14px; color: #374151; }
+    ul { padding-left: 20px; }
+    li { margin-bottom: 6px; }
+    a { color: #2563eb; }
+    .highlight { background: #f0fdf4; border: 1px solid #86efac; border-radius: 6px; padding: 12px 16px; margin: 16px 0; font-size: 14px; color: #166534; font-weight: 500; }
+  </style>
+</head>
+<body>
+  <h1>Privacy Policy</h1>
+  <div class="updated">Last updated: May 15, 2026</div>
+
+  <div class="highlight">
+    SessionPort stores all data exclusively in your browser's local storage (IndexedDB and chrome.storage.local). No data is transmitted to external servers. No account is required.
+  </div>
+
+  <h2>What we collect</h2>
+  <p>SessionPort does not collect personal information. The extension processes the following data locally on your device:</p>
+  <ul>
+    <li><strong>AI chat content</strong> — text from AI model responses (Claude, ChatGPT, Grok, Gemini, Mistral, Perplexity, DeepSeek) that you explicitly capture using the extension. This data is stored only in your browser's IndexedDB and never leaves your device.</li>
+    <li><strong>Extension settings</strong> — your preferences (theme, language, project names, hide-test toggle) stored in chrome.storage.local on your device.</li>
+    <li><strong>Attached files</strong> — files you manually attach to snapshots, stored locally in IndexedDB as binary data.</li>
+  </ul>
+
+  <h2>What we do NOT collect</h2>
+  <ul>
+    <li>Personal identity information (name, email, phone number)</li>
+    <li>Browsing history or activity outside of the supported AI platforms</li>
+    <li>Authentication credentials or passwords</li>
+    <li>Analytics, telemetry, or usage statistics</li>
+    <li>Any data transmitted to our servers (we have none)</li>
+  </ul>
+
+  <h2>Data storage</h2>
+  <p>All snapshot data is stored in your browser's IndexedDB under the SessionPort database. Settings are stored in chrome.storage.local. Both are scoped to your browser profile and do not sync across devices unless you use Chrome's built-in profile sync (which is controlled by Google, not SessionPort).</p>
+  <p>You can export all your data at any time using the Export feature in Settings → Backup, and delete it by uninstalling the extension or clearing browser storage.</p>
+
+  <h2>Permissions</h2>
+  <p>SessionPort requests the following Chrome permissions:</p>
+  <ul>
+    <li><strong>storage</strong> — saves your settings and current session state locally</li>
+    <li><strong>activeTab</strong> — identifies which AI platform is open to apply the correct capture/inject strategy</li>
+    <li><strong>scripting</strong> — injects context text into the AI chat input field when you transfer context</li>
+    <li><strong>sidePanel</strong> — displays the SessionPort interface as a side panel alongside your AI chat</li>
+    <li><strong>tabs</strong> — reads the current tab URL to detect the AI platform and synchronize state</li>
+    <li><strong>alarms</strong> — schedules reliable background polling so capture works even if the service worker would otherwise sleep</li>
+    <li><strong>host permissions</strong> (chatgpt.com, claude.ai, grok.com, gemini.google.com, perplexity.ai, chat.mistral.ai, chat.deepseek.com) — required to run the content script on each supported platform to capture responses and inject context into their text editors</li>
+  </ul>
+
+  <h2>Third parties</h2>
+  <p>SessionPort does not share data with, or send data to, any third parties. The extension does not include analytics libraries, crash reporters, or ad networks.</p>
+
+  <h2>Children</h2>
+  <p>SessionPort is not directed at children under 13 and does not knowingly collect information from them.</p>
+
+  <h2>Changes</h2>
+  <p>If this policy changes materially, we will update the "Last updated" date above. Continued use of the extension after changes constitutes acceptance of the revised policy.</p>
+
+  <h2>Contact</h2>
+  <p>Questions about this policy: <a href="mailto:denisvetyshev@gmail.com">denisvetyshev@gmail.com</a></p>
+</body>
+</html>

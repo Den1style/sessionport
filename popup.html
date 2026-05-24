@@ -1,0 +1,2078 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+::-webkit-scrollbar { width:3px; height:3px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.1); border-radius:3px; }
+::-webkit-scrollbar-thumb:hover { background:rgba(255,255,255,0.22); }
+body.light ::-webkit-scrollbar-thumb { background:rgba(0,0,0,0.12); }
+body.light ::-webkit-scrollbar-thumb:hover { background:rgba(0,0,0,0.25); }
+:root {
+  --border: #1e2028;
+  --border-accent: #2a3a50;
+}
+:focus-visible { outline: 2px solid #aaff00; outline-offset: 2px; border-radius: 3px; }
+body.light :focus-visible { outline-color: #16a34a; }
+
+body {
+  width: 100%;
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  background: #0f1117;
+  color: #e2e4e9;
+  padding: 16px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Screens: все экраны скрыты по умолчанию ── */
+.screen { display: none; flex-direction: column; gap: 8px; padding: 0; }
+.screen.visible { display: flex; }
+
+/* ── Header ── */
+.hdr { display:flex; align-items:center; gap:8px; margin-bottom:10px; padding-bottom:12px; border-bottom:1px solid #1e2028; }
+.hdr-logo { width:24px; height:24px; border-radius:6px; flex-shrink:0; object-fit:contain; }
+.hdr-title { font-size:12px; font-weight:600; flex:1; }
+.hdr-ver { font-size:11px; color:#6b7280; }
+.theme-toggle { width:28px; height:15px; background:#334155; border-radius:8px; cursor:pointer; position:relative; border:none; flex-shrink:0; }
+.theme-thumb { position:absolute; top:2px; left:2px; width:11px; height:11px; border-radius:50%; background:#94a3b8; transition:left 0.15s; }
+.hdr-account-btn { width:28px; height:28px; background:#1e293b; border:1.5px solid #334155; border-radius:8px; display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0; flex-shrink:0; transition:background 0.15s, border-color 0.15s; }
+.hdr-account-btn:hover { background:#263548; border-color:#7c3aed; }
+.hdr-account-btn svg { display:block; }
+
+/* ── Project bar ── */
+.proj-bar { display:flex; align-items:center; gap:6px; padding:6px 9px; background:#161822; border:1px solid #2a3a50; border-radius:8px; cursor:pointer; transition:background 0.15s; }
+.proj-dot { width:7px; height:7px; border-radius:50%; background:#aaff00; flex-shrink:0; box-shadow:0 0 5px rgba(170,255,0,0.5); }
+.proj-dot.dim { background:#4b5563; }
+body.light .proj-dot.dim { background:#d1d5db; }
+.proj-dd-new { border-top:1px solid #1e2028; margin-top:4px; padding-top:8px; color:#aaff00; }
+body.light .proj-dd-new { border-top-color:#e5e7eb; color:#16a34a; }
+.proj-name { color:#c9d1d9; font-size:11px; font-weight:500; flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.proj-pencil { background:none; border:none; cursor:pointer; padding:2px; display:flex; align-items:center; flex-shrink:0; color:#6b7280; }
+.proj-pencil:hover { color:#c9d1d9; }
+.proj-chevron { color:#6b7280; flex-shrink:0; background:none; border:none; cursor:pointer; padding:2px; display:flex; align-items:center; }
+.proj-add { width:22px; height:22px; border-radius:5px; background:#aaff00; border:1.5px solid #aaff00; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; color:#111; }
+.proj-add:hover { background:#ccff00; }
+
+/* ── Dropdown ── */
+.proj-dd { display:none; background:#161822; border:1px solid #2a3a50; border-top:none; border-radius:0 0 8px 8px; padding:5px; margin-top:0; }
+.proj-dd.open { display:block; }
+.proj-dd-item { display:flex; align-items:center; gap:7px; padding:5px 7px; border-radius:5px; cursor:pointer; font-size:11px; color:#c9d1d9; }
+.proj-dd-item:hover { background:#1c1f2e; }
+.proj-dd-item.cur { color:#4ade80; }
+.proj-dd-sep { height:1px; background:#1e2028; margin:3px 0; }
+
+/* ── Sections ── */
+.section { background:#161822; border:1px solid #1e2028; border-radius:10px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.3); }
+.section-header { display:flex; align-items:center; gap:10px; padding:12px 14px; cursor:pointer; user-select:none; transition:background 0.15s; }
+.section-header:hover { background:#1c1f2e; }
+.arrow { font-size:10px; color:#6b7280; transition:transform 0.2s; width:12px; text-align:center; }
+.section.open .arrow { transform:rotate(90deg); }
+.section-label { font-size:13px; font-weight:600; flex:1; letter-spacing:0.01em; }
+.badge-dot { width:8px; height:8px; border-radius:50%; }
+.section-body { display:none; padding:4px 14px 14px; }
+.section.open .section-body { display:block; }
+.section-desc { font-size:12px; color:#9ca3af; line-height:1.5; margin-bottom:12px; }
+
+/* ── Buttons ── */
+button.step-btn { width:100%; padding:10px 14px; border:none; border-radius:8px; font-size:13px; font-weight:500; cursor:pointer; margin-bottom:6px; display:flex; align-items:center; gap:8px; transition:background 0.15s, opacity 0.15s; font-family:inherit; }
+button.step-btn:last-child { margin-bottom:0; }
+.step-num { width:20px; height:20px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:600; flex-shrink:0; }
+.btn-simple { background:#1a3a2a; color:#4ade80; }
+.btn-simple:hover { background:#1f4733; }
+.btn-simple .step-num { background:#22c55e33; color:#4ade80; }
+.btn-extended { background:#1a2740; color:#60a5fa; }
+.btn-extended:hover { background:#1e3350; }
+.btn-extended .step-num { background:#3b82f633; color:#60a5fa; }
+button.step-btn.dimmed { opacity:0.38; cursor:not-allowed; pointer-events:auto; }
+button.step-btn.dimmed:hover { opacity:0.38; }
+
+/* ── Progress bar ── */
+.progress-wrap { height:3px; background:#1e2028; border-radius:2px; margin-top:8px; overflow:hidden; display:none; }
+.progress-wrap.show { display:block; }
+.progress-bar { height:100%; background:#aaff00; border-radius:2px; width:0%; transition:width 0.5s ease; box-shadow:0 0 6px rgba(170,255,0,0.4); }
+
+/* ── Storage usage bar ── */
+.storage-bar { display:flex; align-items:center; gap:6px; padding:4px 0; font-size:10px; color:#6b7280; }
+.storage-label { flex-shrink:0; }
+.storage-track { flex:1; height:4px; background:#1e2028; border-radius:2px; overflow:hidden; }
+.storage-fill { height:100%; background:#22c55e; border-radius:2px; transition:width 0.5s, background 0.3s; width:0%; }
+.storage-fill.moderate { background:#84cc16; }
+.storage-fill.warn { background:#f59e0b; }
+.storage-fill.critical { background:#ef4444; }
+.storage-text { flex-shrink:0; font-family:ui-monospace, monospace; }
+body.light .storage-track { background:#e5e7eb; }
+
+/* ── Status ── */
+.status-bar { padding:8px 12px; background:#161822; border:1px solid #1e2028; border-radius:8px; font-size:11px; color:#6b7280; display:flex; align-items:center; gap:6px; }
+.status-dot { width:6px; height:6px; border-radius:50%; background:#6b7280; flex-shrink:0; }
+.status-dot.active { background:#22c55e; }
+.status-dot.working { background:#FFC107; }
+.status-dot.error { background:#ef4444; }
+
+/* ── LLM links ── */
+.llm-link { display:inline-block; padding:4px 10px; background:#1e293b; color:#94a3b8; border-radius:6px; font-size:11px; text-decoration:none; transition:background 0.15s; }
+.llm-link:hover { background:#334155; color:#e2e8f0; }
+.btn-paste { background:#7c3aed; color:#fff; font-weight:600; justify-content:center; }
+.btn-paste:hover { background:#6d28d9; }
+.paste-sub-btn { background:#1e293b; color:#94a3b8; justify-content:center; }
+.paste-sub-btn:hover { background:#243044; color:#cbd5e1; }
+.copy-btn { background:#1e293b; color:#94a3b8; font-size:12px; }
+.copy-btn:hover { background:#263548; }
+
+/* ── Donate button (main screen) ── */
+.btn-donate { width:100%; padding:8px 12px; background:#1a1200; border:1px solid #3d2a00; border-radius:8px; display:flex; align-items:center; gap:8px; cursor:pointer; font-family:inherit; color:#f59e0b; font-size:12px; font-weight:500; }
+.btn-donate:hover { background:#221600; }
+
+/* ── History + Map nav ── */
+.nav-row { display:flex; gap:6px; }
+.btn-nav { flex:1; padding:8px 10px; background:#1a2535; border:1px solid #2a3a50; border-radius:8px; display:flex; align-items:center; gap:7px; cursor:pointer; font-family:inherit; color:#60a5fa; font-size:11px; font-weight:500; transition:background 0.15s, border-color 0.15s; }
+.btn-nav:hover { background:#1c2d42; }
+.btn-nav-map { background:#1a1535; border-color:#3b1e6e; color:#c4b5fd; }
+.btn-nav-map:hover { background:#1f1a40; }
+.nav-badge { background:#3b82f6; color:#fff; font-size:9px; padding:1px 5px; border-radius:3px; }
+
+/* ── Footer ── */
+.footer-links { display:flex; align-items:center; justify-content:center; gap:8px; margin-top:4px; flex-wrap:wrap; }
+.footer-btn { background:none; border:none; color:#4b5563; font-size:10px; cursor:pointer; font-family:inherit; }
+.footer-btn:hover { color:#6b7280; }
+.footer-btn-test { color:#f59e0b; }
+.test-strip { margin-bottom:8px; }
+.test-strip-btn {
+  width:100%; padding:5px 10px; background:#1a1200; border:1px solid #3d2a00;
+  border-radius:6px; color:#f59e0b; font-size:11px; font-weight:500;
+  cursor:pointer; font-family:inherit; display:flex; align-items:center;
+  justify-content:center; gap:5px; transition:background 0.15s;
+}
+.test-strip-btn:hover { background:#261800; }
+body.light .test-strip-btn { background:#fffbeb; border-color:#fde68a; color:#92400e; }
+body.light .test-strip-btn:hover { background:#fef3c7; }
+.footer-sep { color:#2a3040; font-size:10px; }
+
+/* ── Back header (для всех экранов) ── */
+.back-hdr { display:flex; align-items:center; gap:8px; padding-bottom:10px; border-bottom:1px solid #1e2028; }
+.back-btn { display:flex; align-items:center; gap:4px; background:#161822; border:1px solid #1e2028; border-radius:5px; padding:4px 8px; color:#60a5fa; font-size:10px; cursor:pointer; font-family:inherit; }
+.back-btn:hover { background:#1c1f2e; }
+.back-title { font-size:13px; font-weight:500; flex:1; }
+.back-badge { font-size:10px; color:#6b7280; background:#161822; border:1px solid #1e2028; border-radius:4px; padding:2px 6px; }
+
+/* ── History screen ── */
+.hist-tabs { display:flex; gap:4px; }
+.hist-tab { flex:1; padding:4px 0; border-radius:5px; font-size:10px; cursor:pointer; border:1px solid #1e2028; background:#161822; color:#6b7280; font-family:inherit; text-align:center; }
+.hist-tab.on { background:#1a3a2a; border-color:#22c55e44; color:#4ade80; }
+.hist-tab.map-t.on { background:#1a1535; border-color:#7c3aed44; color:#c4b5fd; }
+.hist-filters { display:flex; gap:4px; }
+.hist-filter { padding:3px 8px; border-radius:5px; font-size:10px; cursor:pointer; border:1px solid #1e2028; background:#161822; color:#6b7280; font-family:inherit; }
+.hist-filter.on { background:#1a2535; border-color:#2a3a50; color:#60a5fa; }
+#screenHistory { height: calc(100vh - 28px); overflow: hidden; }
+#histPanel { flex:1; overflow-y:auto; min-height:0; display:flex; flex-direction:column; gap:5px; }
+.hist-list { display:flex; flex-direction:column; gap:4px; }
+.hist-card { background:#161822; border:1px solid #1e2028; border-radius:7px; padding:8px 10px; box-shadow:0 2px 8px rgba(0,0,0,0.25); cursor:pointer; }
+.hist-card.is-head { border-color:#22c55e55; box-shadow:0 2px 10px rgba(34,197,94,0.08); }
+.hist-card.selected { border-color:#7c3aed55; box-shadow:0 0 0 1px #7c3aed22, 0 2px 8px rgba(0,0,0,0.25); }
+body.light .hist-card.selected { border-color:#c4b5fd; }
+/* ── History search ── */
+.hist-search { flex:1; min-width:0; padding:6px 10px; background:#161822; border:1px solid #1e2028; border-radius:7px; color:#e2e4e9; font-family:inherit; font-size:11px; outline:none; transition:border-color 0.15s; }
+.hist-search::placeholder { color:#4b5563; }
+.hist-search:focus { border-color:#3b82f644; }
+body.light .hist-search { background:#fff; border-color:#e5e7eb; color:#111318; }
+body.light .hist-search::placeholder { color:#9ca3af; }
+/* ── Project dropdown ── */
+.hist-proj-select { flex-shrink:0; padding:5px 6px; background:#161822; border:1px solid #1e2028; border-radius:7px; color:#9ca3af; font-family:inherit; font-size:10px; outline:none; cursor:pointer; transition:border-color 0.15s; max-width:110px; }
+.hist-proj-select:focus { border-color:#3b82f644; }
+body.light .hist-proj-select { background:#fff; border-color:#e5e7eb; color:#374151; }
+/* ── Map node info panel ── */
+.map-node-info { display:none; border:1px solid #2a3a50; border-radius:8px; padding:10px 12px; }
+.map-node-info.visible { display:block; }
+.map-node-info-row { display:flex; align-items:center; gap:6px; margin-bottom:3px; }
+.map-node-info-proj { font-size:12px; font-weight:600; color:#c9d1d9; flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.map-node-info-date { font-size:10px; color:#6b7280; flex-shrink:0; }
+.map-node-info-meta { font-size:10px; color:#6b7280; margin-bottom:6px; }
+/* Inside canvas — absolute overlay at bottom-left */
+.map-canvas .map-node-info {
+  position:absolute; bottom:6px; left:6px; right:50px; z-index:10; margin:0;
+  background:rgba(18,20,30,0.94); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+}
+body.light .map-canvas .map-node-info { background:rgba(255,255,255,0.95); border-color:#e5e7eb; }
+body.light .map-node-info-proj { color:#111318; }
+.hist-card-top { display:flex; align-items:center; gap:6px; margin-bottom:4px; }
+.hist-head-badge { background:#1a3a2a; color:#4ade80; font-size:9px; padding:1px 5px; border-radius:3px; font-weight:600; }
+.hist-date { color:#6b7280; font-size:11px; }
+.hist-project { color:#c9d1d9; font-size:12px; font-weight:500; margin-bottom:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.hist-desc { font-size:10px; color:#6b7280; line-height:1.4; margin-bottom:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+body.light .hist-desc { color:#9ca3af; }
+.hist-meta { display:flex; align-items:center; gap:4px; font-size:11px; color:#6b7280; margin-bottom:5px; }
+.hist-sep { color:#2a3a50; }
+.hist-card-top-actions { display:flex; align-items:center; gap:4px; margin-left:auto; }
+.btn-hsm { padding:4px 7px; background:#1e293b; border:1px solid #334155; border-radius:5px; color:#64748b; font-size:10px; cursor:pointer; font-family:inherit; transition:background 0.15s, color 0.15s; }
+.btn-hsm:hover { background:#263548; color:#94a3b8; }
+.btn-hsm.dact { background:#1a3a2a; border-color:#22c55e44; color:#4ade80; }
+.hist-empty { color:#4b5563; font-size:12px; text-align:center; padding:16px 0; }
+.hist-export { width:100%; padding:6px; background:#161822; border:1px solid #1e2028; border-radius:6px; color:#6b7280; font-size:10px; cursor:pointer; font-family:inherit; margin-top:2px; }
+
+/* v1.2.2: hist files + dropzone + paste actions per card */
+.hist-files { margin-top: 5px; padding-top: 5px; border-top: 1px solid #1e2028; }
+.hist-files-header { display:flex; align-items:center; justify-content:space-between; margin-bottom: 3px; }
+.hist-files-label { font-size: 10px; color: #6b7280; }
+.hist-files-count { color: #9ca3af; }
+.hist-files-list { margin-bottom: 5px; }
+.hist-file-row { display:flex; align-items:center; gap:5px; padding: 3px 5px; background: #0f1117; border:1px solid #1e2028; border-radius: 4px; margin-bottom: 2px; font-size: 10px; }
+.hist-file-ic { width:18px; height:18px; border-radius:3px; display:flex; align-items:center; justify-content:center; font-size:8px; font-weight:600; flex-shrink:0; }
+.hist-file-name { flex:1; color:#c9d1d9; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.hist-file-rm { color:#5a6472; cursor:pointer; padding:0 4px; user-select:none; }
+.hist-file-rm:hover { color:#ef4444; }
+.hist-card-dropzone { padding:5px; border:1.5px dashed #2a3140; border-radius:5px; background: rgba(170,255,0,0.03); text-align:center; font-size:10px; color:#aaff00; transition:all 0.15s; cursor:default; }
+.hist-card-dropzone.drag-over { border-color:#aaff00; background:rgba(170,255,0,0.1); }
+.hist-dz-browse { text-decoration:underline; text-underline-offset:2px; cursor:pointer; }
+.hist-paste-row { display:flex; gap:4px; margin-top:5px; padding-top:5px; border-top:1px solid #1e2028; }
+.hist-paste-btn { flex:1; padding:4px; background:#1e293b; border:1px solid #334155; border-radius:5px; color:#c9d1d9; font-size:10px; cursor:pointer; font-family:inherit; transition:background 0.15s, color 0.15s; }
+.hist-paste-btn:hover { background:#263548; }
+.hist-paste-btn.primary { background:#7c3aed; border-color:#7c3aed; color:#fff; font-weight:500; }
+.hist-paste-btn.primary:hover { background:#6d28d9; }
+
+body.light .hist-files { border-top-color:#e5e7eb; }
+body.light .hist-file-row { background:#f3f4f6; border-color:#e5e7eb; }
+body.light .hist-file-name { color:#374151; }
+body.light .hist-card-dropzone { border-color:#d1d5db; color:#16a34a; background:rgba(34,197,94,0.04); }
+body.light .hist-dz-browse { color:#16a34a; }
+body.light .hist-paste-row { border-top-color:#e5e7eb; }
+body.light .hist-paste-btn { background:#e5e7eb; color:#1f2937; border-color:#d1d5db; }
+.diff-panel { background:#0f1117; border:1px solid #2a3a50; border-radius:8px; padding:10px; margin-bottom:4px; }
+.diff-panel-header { display:flex; align-items:center; justify-content:space-between; font-size:11px; color:#9ca3af; margin-bottom:6px; }
+.diff-close-btn { background:none; border:none; color:#6b7280; cursor:pointer; font-size:13px; font-family:inherit; }
+.diff-legend { display:flex; gap:8px; margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid #1e2028; }
+.diff-legend-item { display:flex; align-items:center; gap:3px; font-size:9px; color:#6b7280; }
+.diff-badge { display:inline-flex; align-items:center; justify-content:center; border-radius:3px; font-size:9px; font-weight:600; padding:1px 5px; flex-shrink:0; }
+.diff-badge.add { background:#14532d; color:#4ade80; }
+.diff-badge.rem { background:#450a0a; color:#f87171; }
+.diff-badge.chg { background:#422006; color:#fbbf24; }
+.diff-row { display:flex; gap:6px; align-items:flex-start; font-size:10px; padding:5px 0; border-bottom:1px solid #1e2028; }
+.diff-row:last-child { border-bottom:none; }
+.diff-txt { color:#c9d1d9; line-height:1.5; }
+
+/* ── Map screen ── */
+.map-canvas { background:#080c12; border:1px solid #1e2028; border-radius:8px; position:relative; height:420px; overflow:hidden; cursor:grab; user-select:none; -webkit-user-select:none; }
+.map-toolbar { display:flex; gap:4px; }
+.map-tool-btn { flex:1; padding:6px; border-radius:6px; font-size:10px; font-weight:500; cursor:pointer; font-family:inherit; border:1px solid; text-align:center; background:#161822; border-color:#1e2028; color:#6b7280; }
+.map-tool-btn:hover { background:#1c1f2e; color:#c9d1d9; }
+body.light .map-tool-btn { background:#f3f4f6; border-color:#e5e7eb; color:#6b7280; }
+body.light .map-tool-btn:hover { background:#e5e7eb; color:#374151; }
+
+/* Zoom buttons (popup map screens) */
+.map-zoom { width:22px; height:22px; border-radius:4px; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0; font-family:inherit; background:#161822; border:1px solid #1e2028; color:#6b7280; }
+.map-zoom:hover { background:#1c1f2e; color:#c9d1d9; }
+body.light .map-zoom { background:#fff; border-color:#e5e7eb; color:#6b7280; }
+body.light .map-zoom:hover { background:#f3f4f6; color:#374151; }
+
+/* Map empty state label */
+.map-empty-label { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:#4b5563; font-size:11px; text-align:center; }
+body.light .map-empty-label { color:#9ca3af; }
+
+/* ── Bug links ── */
+.bug-link { display:flex; align-items:center; gap:10px; padding:10px 12px; background:#161822; border:1px solid #1e2028; border-radius:8px; text-decoration:none; transition:background 0.15s; }
+.bug-link:hover { background:#1c1f2e; }
+.bug-icon { width:28px; height:28px; border-radius:6px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.bug-name { font-size:11px; font-weight:500; color:#c9d1d9; }
+.bug-url { font-size:10px; color:#6b7280; }
+
+/* ── Light theme ── */
+body.light { background:#f8f9fc; color:#111318; }
+body.light .hdr { border-bottom-color:#e5e7eb; }
+body.light .hdr-title { color:#111318; }
+body.light .theme-toggle { background:#aaff00; }
+body.light .hdr-account-btn { background:#f1f5f9; border-color:#94a3b8; }
+body.light .hdr-account-btn:hover { background:#e2e8f0; border-color:#6366f1; }
+body.light .theme-thumb { left:15px; background:#fff; }
+body.light .proj-bar { background:#f3f4f6; border-color:#e5e7eb; }
+body.light .proj-name { color:#111318; }
+body.light .proj-add { background:#111318; border-color:#111318; color:#fff; }
+body.light .proj-add:hover { background:#374151; border-color:#374151; }
+body.light .proj-pencil { color:#9ca3af; }
+body.light .proj-pencil:hover { color:#374151; }
+body.light .proj-dd { background:#fff; border-color:#e5e7eb; border-top:none; }
+body.light .proj-dd-item { color:#111318; }
+body.light .proj-dd-item:hover { background:#f3f4f6; }
+body.light .section { background:#fff; border-color:#e5e7eb; }
+body.light .section-header:hover { background:#f3f4f6; }
+body.light .section-label { color:#111318; }
+body.light .section-desc { color:#6b7280; }
+body.light .btn-simple { background:#dcfce7; border:1.5px solid #22c55e; color:#14532d; }
+body.light .btn-simple:hover { background:#bbf7d0; }
+body.light .btn-simple .step-num { background:#15803d; color:#fff; }
+body.light .btn-simple.dimmed { background:#f3f4f6; border:1px solid #e5e7eb; color:#9ca3af; }
+body.light .btn-extended { background:#dbeafe; border:1.5px solid #3b82f6; color:#1e3a8a; }
+body.light .btn-extended:hover { background:#bfdbfe; }
+body.light .btn-extended .step-num { background:#1d4ed8; color:#fff; }
+body.light .btn-extended.dimmed { background:#f3f4f6; border:1px solid #e5e7eb; color:#9ca3af; }
+body.light .status-bar { background:#fff; border-color:#e5e7eb; }
+/* UI-04: status dots on light status-bar need explicit colors for contrast */
+body.light .status-dot { background:#9ca3af; }
+body.light .status-dot.active  { background:#16a34a; }
+body.light .status-dot.working { background:#d97706; }
+body.light .status-dot.error   { background:#dc2626; }
+/* UI-05: footer-sep darker for visibility on light background */
+body.light .footer-sep { color:#9ca3af; }
+body.light .llm-link { background:#f3f4f6; color:#6b7280; }
+body.light .btn-donate { background:#fffbeb; border-color:#fde68a; color:#92400e; }
+body.light .btn-nav { background:#eff6ff; border-color:#bfdbfe; color:#1d4ed8; }
+body.light .btn-nav-map { background:#ede9fe; border-color:#c4b5fd; color:#6d28d9; }
+body.light .back-btn { background:#f3f4f6; border-color:#e5e7eb; }
+body.light .back-badge { background:#f3f4f6; border-color:#e5e7eb; }
+body.light .hist-tab { background:#f3f4f6; border-color:#e5e7eb; }
+body.light .hist-tab.on { background:#dcfce7; border-color:#86efac; color:#166534; }
+body.light .hist-tab.map-t.on { background:#ede9fe; border-color:#c4b5fd; color:#5b21b6; }
+
+/* Transfer mode tabs (Simple / Extended) */
+.transfer-tabs { display:flex; gap:4px; margin:8px 14px 0; }
+.trans-tab-reset { margin-left:auto; background:none; border:1px solid #2a3140; border-radius:6px; color:#6b7280; font-size:13px; cursor:pointer; padding:2px 7px; transition:all 0.15s; }
+.trans-tab-reset:hover { border-color:#ef4444; color:#ef4444; }
+.trans-tab {
+  flex:1; padding:6px 0; border-radius:6px; font-size:11px; font-weight:500;
+  cursor:pointer; font-family:inherit; text-align:center; border:1px solid;
+  background:#161822; border-color:#1e2028; color:#6b7280;
+  transition:background 0.15s, color 0.15s;
+}
+.trans-tab.active-simple  { background:#1a3a2a; border-color:#22c55e44; color:#4ade80; }
+.trans-tab.active-ext     { background:#14203a; border-color:#3b82f644; color:#60a5fa; }
+.trans-tab.active-account { background:#1a1535; border-color:#7c3aed44; color:#a78bfa; }
+body.light .trans-tab { background:#f3f4f6; border-color:#e5e7eb; color:#6b7280; }
+body.light .trans-tab.active-simple  { background:#dcfce7; border-color:#86efac; color:#166534; }
+body.light .trans-tab.active-account { background:#ede9fe; border-color:#c4b5fd; color:#5b21b6; }
+body.light .trans-tab.active-ext    { background:#eff6ff; border-color:#bfdbfe; color:#1d4ed8; }
+body.light .hist-filter { background:#f3f4f6; border-color:#e5e7eb; }
+body.light .hist-filter.on { background:#eff6ff; border-color:#bfdbfe; color:#1d4ed8; }
+
+/* Map tooltip */
+.map-tooltip { position:absolute; z-index:100; pointer-events:none; opacity:0; transition:opacity 0.15s;
+  background:#1a1d27; border:1px solid #2a2d37; border-radius:6px; padding:8px 10px; font-size:11px;
+  max-width:220px; box-shadow:0 4px 12px rgba(0,0,0,0.4); }
+.map-tooltip-title { font-weight:600; color:#e2e4e9; margin-bottom:4px; }
+.map-tooltip-meta  { color:#6b7280; font-size:10px; }
+.map-tooltip-head  { color:#22c55e; margin-top:4px; font-weight:600; font-size:10px; }
+body.light .map-tooltip { background:#fff; border-color:#e5e7eb; box-shadow:0 4px 12px rgba(0,0,0,0.1); }
+body.light .map-tooltip-title { color:#111318; }
+body.light .map-tooltip-meta  { color:#6b7280; }
+body.light .hist-card { background:#fff; border-color:#e5e7eb; }
+body.light .hist-card.is-head { border-color:#86efac; }
+body.light .hist-project { color:#111318; }
+body.light .hist-head-badge { background:#dcfce7; color:#166534; }
+body.light .btn-hsm { background:#f3f4f6; border-color:#d1d5db; color:#6b7280; }
+body.light .hist-export { background:#f3f4f6; border-color:#e5e7eb; }
+body.light .diff-panel { background:#f8f9fa; border-color:#e5e7eb; }
+body.light .diff-txt { color:#374151; }
+body.light .diff-badge.add { background:#dcfce7; color:#15803d; }
+body.light .diff-badge.rem { background:#fee2e2; color:#dc2626; }
+body.light .diff-badge.chg { background:#fef9c3; color:#a16207; }
+body.light .map-canvas { background:#eef0f3; border-color:#e5e7eb; }
+body.light .bug-link { background:#fff; border-color:#e5e7eb; }
+body.light .bug-link:hover { background:#f3f4f6; }
+body.light .bug-name { color:#111318; }
+body.light #mapEmptyEl { color: #6b7280 !important; }
+body.light #mapBtnBranch, body.light #hmapBtnBranch { background:#dcfce7; border-color:#86efac; color:#166534; }
+body.light #mapBtnLink { background:#dbeafe; border-color:#93c5fd; color:#1e3a8a; }
+body.light #mapBtnNew { background:#f3f4f6; border-color:#e5e7eb; color:#4b5563; }
+body.light #mapBtnDashboard, body.light #hmapBtnDashboard { background:#ede9fe; border-color:#c4b5fd; color:#6d28d9; }
+#mapBtnBranch, #hmapBtnBranch { background:#1a3a2a; border-color:#22c55e44; color:#4ade80; }
+#mapBtnLink { background:#14203a; border-color:#3b82f644; color:#93c5fd; }
+#mapBtnLink.link-active { background:#1e1040; border-color:#a855f7; color:#d8b4fe; }
+#mapBtnNew { background:#161822; border-color:#1e2028; color:#6b7280; }
+#mapBtnDashboard, #hmapBtnDashboard { background:#1a1535; border-color:#7c3aed44; color:#c4b5fd; }
+#mapLinkHint { display:none; margin-top:5px; padding:5px 10px; background:#1a1040; border:1px solid #a855f744; border-radius:6px; color:#d8b4fe; font-size:10px; text-align:center; }
+#mapLinkHint.visible { display:block; }
+
+body.light .files-section { background:#fff; border-color:#e5e7eb; }
+body.light .files-header-left { color:#111318; }
+body.light .file-item { background:#f3f4f6; border-color:#e5e7eb; }
+body.light .file-name { color:#374151; }
+body.light .dropzone { border-color:#d1d5db; background:rgba(34,197,94,0.04); color:#16a34a; }
+body.light .dropzone-title { color:#16a34a; }
+body.light .dropzone-hint { color:#6b7280; }
+
+/* ── History section (old inline history inside sectionHistory) ── */
+#sectionHistory .section-body { padding-top:8px; }
+#historyList { max-height:200px; overflow-y:auto; display:flex; flex-direction:column; gap:4px; margin-bottom:6px; }
+.history-item { background:#0f1117; border:1px solid #1e2028; border-radius:6px; padding:6px 8px; display:flex; justify-content:space-between; align-items:center; gap:6px; }
+.history-item--active { border-color:#22c55e55; }
+.history-item__meta { display:flex; flex-direction:column; gap:1px; flex:1; min-width:0; }
+.history-item__date { font-size:10px; color:#6b7280; }
+.history-item__host { font-size:11px; color:#c9d1d9; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.history-item__size { font-size:10px; color:#4b5563; }
+.btn-history-load { background:#1e293b; color:#94a3b8; border:1px solid #334155; border-radius:4px; padding:3px 8px; font-size:11px; cursor:pointer; flex-shrink:0; width:auto; margin-bottom:0; font-family:inherit; }
+.btn-history-load:hover { background:#334155; color:#e2e8f0; }
+.history-empty { font-size:11px; color:#4b5563; text-align:center; padding:10px 0; }
+#btnExportHistory { width:100%; background:#161822; color:#6b7280; border:1px solid #1e2028; border-radius:6px; padding:6px; font-size:11px; cursor:pointer; font-family:inherit; }
+#btnExportHistory:hover { color:#9ca3af; background:#1c1f2e; }
+body.light .history-item { background:#fff; border-color:#e5e7eb; }
+body.light .history-item__host { color:#111318; }
+body.light #btnExportHistory { background:#f3f4f6; border-color:#e5e7eb; color:#6b7280; }
+
+/* Scan / manual capture button */
+.scan-btn {
+  display:flex; align-items:center; justify-content:center; gap:7px;
+  width:100%; padding:8px 12px; border-radius:8px; cursor:pointer;
+  font-size:11px; font-weight:500; font-family:inherit;
+  background:#0f1117; border:1px solid #2a3140; color:#6b7280;
+  margin-top:8px; transition:background 0.15s;
+}
+.scan-btn:hover { background:#161822; color:#9ca3af; }
+body.light .scan-btn { background:#f9fafb; border-color:#d1d5db; color:#6b7280; }
+body.light .scan-btn:hover { background:#f3f4f6; color:#374151; }
+/* linked pairs */
+.linked-pair { background:#14203a; border:1px solid #3b82f644; border-radius:8px; padding:8px; margin-bottom:5px; }
+.linked-pair-header { display:flex; align-items:center; gap:5px; font-size:9px; color:#60a5fa; margin-bottom:7px; }
+.linked-pair-cols { display:flex; gap:6px; align-items:flex-start; }
+.linked-col { flex:1; min-width:0; }
+.linked-col-title { font-size:9px; text-align:center; padding:2px 4px; border-radius:3px; margin-bottom:5px; }
+.linked-col-title.green { background:#1a3a2a; color:#4ade80; }
+.linked-col-title.amber { background:#2a1f00; color:#fbbf24; }
+.linked-divider { display:flex; align-items:center; justify-content:center; padding:0 2px; padding-top:18px; }
+.linked-shared { margin-top:6px; padding:4px 7px; background:#0f1a2e; border:1px solid #3b82f644; border-radius:5px; display:flex; align-items:center; gap:5px; font-size:9px; color:#60a5fa; }
+
+/* ── Checklist этапы ── */
+.checklist { display:flex; flex-direction:column; gap:6px; position:relative; }
+.checklist::before {
+  content:''; position:absolute; left:10px; top:14px; bottom:14px;
+  width:1.5px; background:#1e2028; z-index:0;
+}
+.checklist.progress-active::before { background:linear-gradient(#4ade80 var(--checklist-progress, 0%), #1e2028 var(--checklist-progress, 0%)); }
+
+.step-btn { position:relative; z-index:1; }
+
+.step-marker {
+  width:22px; height:22px; border-radius:50%; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+  box-shadow:0 0 0 3px #161822; transition:background 0.2s, border-color 0.2s;
+}
+.step-btn.state-done .step-marker { background:#22c55e; }
+.step-btn.state-active .step-marker { background:transparent; border:2px solid #22c55e; }
+.step-btn.state-active .step-marker::before {
+  content:''; width:7px; height:7px; border-radius:50%; background:#22c55e;
+}
+.step-btn.state-wait .step-marker { background:#0f1117; border:1.5px solid #2a3140; }
+
+.step-check { width:11px; height:11px; display:none; }
+.step-btn.state-done .step-check { display:block; }
+.step-btn.state-done .step-num { display:none; }
+.step-btn.state-active .step-num { display:none; }
+
+.step-body { flex:1; display:flex; flex-direction:column; gap:2px; text-align:left; }
+.step-label { font-size:13px; font-weight:500; }
+.step-hint { font-size:10px; color:#6b7280; }
+.step-btn.state-active .step-hint { color:#facc15; }
+
+.state-badge {
+  font-size:9px; padding:2px 6px; border-radius:3px; letter-spacing:0.3px;
+  text-transform:uppercase; font-weight:500;
+}
+.step-btn.state-done   .state-badge { background:rgba(34,197,94,0.15);  color:#4ade80; }
+.step-btn.state-active .state-badge { background:rgba(250,204,21,0.15); color:#facc15; }
+.step-btn.state-wait   .state-badge { background:#1a1f2a;                color:#5a6472; }
+
+/* ── Active snapshot card (expandable) ── */
+.snap-card { display:none; padding:10px 12px; background:#161822; border:1px solid #2a3a50; border-top:none; border-radius:0 0 8px 8px; margin-top:-1px; }
+.snap-card.open { display:block; }
+.snap-card-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:8px; }
+.snap-card-row .k { font-size:10px; color:#6b7280; margin-bottom:2px; }
+.snap-card-row .v { font-size:12px; color:#c9d1d9; }
+.snap-card-next { font-size:10px; color:#6b7280; margin-bottom:2px; }
+.snap-card-next-v { font-size:12px; color:#c9d1d9; line-height:1.4; }
+.snap-card-decisions { border-top:1px solid #1e2028; padding-top:8px; margin-top:8px; }
+.snap-card-decisions .k { font-size:10px; color:#6b7280; margin-bottom:4px; }
+.snap-card-decisions ul { list-style:none; padding:0; margin:0; }
+.snap-card-decisions li { font-size:11px; color:#9ca3af; line-height:1.5; padding-left:12px; position:relative; }
+.snap-card-decisions li::before { content:'·'; position:absolute; left:4px; color:#4ade80; }
+.no-decisions { color:#6b7280; }
+body.light .no-decisions { color:#9ca3af; }
+
+.proj-bar.dd-open, .proj-bar.snap-open { border-radius:8px 8px 0 0; }
+.proj-chevron { transition:transform 0.2s; }
+.proj-bar.dd-open .proj-chevron { transform:rotate(180deg); }
+.proj-info { background:none; border:none; cursor:pointer; padding:2px; display:flex; align-items:center; flex-shrink:0; color:#4b5563; transition:color 0.15s; }
+.proj-info:hover { color:#9ca3af; }
+.proj-info.active { color:#aaff00; }
+body.light .proj-info { color:#9ca3af; }
+body.light .proj-info.active { color:#16a34a; }
+
+/* ── Files section ── */
+.files-section { background:#161822; border:1px solid #1e2028; border-radius:10px; padding:12px 14px; }
+.files-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+.files-header-left { display:flex; align-items:center; gap:8px; font-size:13px; font-weight:500; color:#c9d1d9; }
+.files-count { font-size:10px; color:#6b7280; }
+
+.file-item { display:flex; align-items:center; gap:10px; padding:8px 10px; background:#0f1117;
+  border:1px solid #1e2028; border-radius:6px; margin-bottom:6px; cursor:grab; user-select:none; }
+.file-item:active { cursor:grabbing; }
+.file-item.dragging { opacity:0.4; border-color:#aaff00; }
+.file-icon { width:26px; height:26px; border-radius:5px; display:flex; align-items:center; justify-content:center;
+  font-size:9px; font-weight:600; flex-shrink:0; }
+.file-meta { flex:1; min-width:0; }
+.file-name { font-size:12px; font-weight:500; color:#c9d1d9; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.file-sub { font-size:10px; color:#6b7280; font-family:ui-monospace, monospace; }
+.file-remove { color:#5a6472; cursor:pointer; font-size:14px; padding:0 4px; }
+.file-remove:hover { color:#ef4444; }
+
+.dropzone { padding:14px 12px; border:1.5px dashed #2a3140; border-radius:7px;
+  background:rgba(170,255,0,0.03); text-align:center; transition:background 0.15s, border-color 0.15s;
+  color: #aaff00; }
+.dropzone.drag-over { border-color:#aaff00; background:rgba(170,255,0,0.08); }
+.dropzone-title { font-size:12px; color:inherit; font-weight:500; margin-bottom:2px; }
+.dropzone-hint { font-size:10px; color:#9ca3af; line-height:1.4; }
+.dropzone-browse { color:#aaff00; cursor:pointer; text-decoration:underline; text-underline-offset:2px; }
+.dropzone-browse:hover { color:#ccff00; }
+body.light .dropzone-browse { color:#16a34a; text-decoration:underline; text-underline-offset:2px; }
+body.light .dropzone-browse:hover { color:#15803d; }
+.dropzone svg { margin:0 auto 6px; display:block; }
+
+/* v1.2.3 — disabled state + shake animation */
+.dropzone.disabled { border-color:#5f3a1a; background:rgba(245,158,11,0.06); color:#fbbf24; }
+.dropzone.disabled .dropzone-hint { color:#9ca775; }
+.dropzone.shake { animation: pr-shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+@keyframes pr-shake {
+  10%,90% { transform: translateX(-1px); }
+  20%,80% { transform: translateX(2px); }
+  30%,50%,70% { transform: translateX(-3px); }
+  40%,60% { transform: translateX(3px); }
+}
+body.light .dropzone.disabled { border-color:#fcd34d; background:rgba(245,158,11,0.06); color:#a16207; }
+
+/* ── Additional light theme overrides ── */
+body.light .back-hdr { border-bottom-color:#e5e7eb; }
+body.light .snap-card { background:#f9fafb; border-color:#e5e7eb; }
+body.light .snap-card-row .v { color:#374151; }
+body.light .snap-card-next-v { color:#374151; }
+body.light .snap-card-decisions { border-top-color:#e5e7eb; }
+body.light .snap-card-decisions li { color:#6b7280; }
+body.light .step-marker { box-shadow:0 0 0 3px #fff; }
+body.light .step-btn.state-wait .step-marker { background:#f3f4f6; border-color:#d1d5db; }
+body.light .checklist::before { background:#e5e7eb; }
+body.light .checklist.progress-active::before { background:linear-gradient(#22c55e var(--checklist-progress, 0%), #e5e7eb var(--checklist-progress, 0%)); }
+body.light .progress-wrap { background:#e5e7eb; }
+body.light .copy-btn { background:#f3f4f6; color:#6b7280; }
+body.light .btn-paste { background:#7c3aed; color:#fff; }
+body.light .paste-sub-btn { background:#f3f4f6; color:#374151; border-color:#e5e7eb; }
+body.light .paste-sub-btn:hover { background:#e5e7eb; color:#111827; }
+body.light .footer-btn { color:#6b7280; }
+body.light .hist-file-row { background:#f3f4f6; border-color:#e5e7eb; }
+body.light .hist-file-name { color:#374151; }
+body.light .hist-files { border-top-color:#e5e7eb; }
+body.light .hist-paste-btn { background:#f3f4f6; border-color:#d1d5db; color:#374151; }
+body.light .hist-paste-btn.primary { background:#7c3aed; color:#fff; }
+body.light .hist-paste-row { border-top-color:#e5e7eb; }
+body.light .hist-card-dropzone.drag-over { border-color:#16a34a; background:rgba(34,197,94,0.1); }
+body.light .history-item { background:#fff; border-color:#e5e7eb; }
+body.light .btn-history-load { background:#f3f4f6; border-color:#d1d5db; color:#6b7280; }
+body.light .linked-pair { background:#eff6ff; border-color:#bfdbfe; }
+body.light .linked-col-title.green { background:#dcfce7; color:#166534; }
+body.light .linked-col-title.amber { background:#fef9c3; color:#a16207; }
+body.light .linked-shared { background:#eff6ff; border-color:#bfdbfe; color:#1d4ed8; }
+body.light .diff-legend { border-bottom-color:#e5e7eb; }
+body.light .diff-row { border-bottom-color:#f3f4f6; }
+body.light .diff-row:last-child { border-bottom:none; }
+body.light .state-badge { }
+body.light .step-btn.state-wait .state-badge { background:#f3f4f6; color:#9ca3af; }
+body.light .nav-badge { background:#e5e7eb; color:#6b7280; }
+
+/* ── Checklist success overlay ────────────────────── */
+.checklist { position: relative; }
+.checklist-overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(14, 17, 24, 0.88);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  backdrop-filter: blur(4px);
+  cursor: pointer;
+}
+.light .checklist-overlay { background: rgba(255,255,255, 0.88); }
+.checklist-overlay-text {
+  color: #4ade80;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+/* ── Trash screen ─────────────────────────────────── */
+.trash-card { background:#161822; border:1px solid #1e2028; border-radius:8px; padding:11px; margin-bottom:8px; }
+.trash-card-project { font-size:12px; font-weight:500; color:#e5e7eb; margin-bottom:3px; }
+.trash-card-meta { font-size:10px; color:#6b7280; margin-bottom:8px; }
+.trash-card-actions { display:flex; gap:6px; }
+.trash-restore-btn { flex:1; padding:5px 8px; background:#1a3a2a; border:1px solid #22c55e44; border-radius:6px; color:#4ade80; font-size:10px; font-family:inherit; cursor:pointer; }
+.trash-restore-btn:hover { background:#1e4030; }
+.trash-delete-btn { padding:5px 8px; background:#2a1a1a; border:1px solid #ef444444; border-radius:6px; color:#f87171; font-size:10px; font-family:inherit; cursor:pointer; }
+.trash-delete-btn:hover { background:#3a1a1a; }
+.trash-empty-state { text-align:center; padding:30px 0; color:#4b5563; font-size:12px; }
+.trash-footer { padding-top:10px; border-top:1px solid #1e2028; margin-top:4px; }
+.btn-empty-trash { width:100%; padding:7px; background:#2a1a1a; border:1px solid #ef444444; border-radius:6px; color:#f87171; font-size:11px; font-family:inherit; cursor:pointer; }
+.btn-empty-trash:hover { background:#3a1a1a; }
+.btn-empty-trash:disabled { opacity:0.4; cursor:default; }
+/* delete button in history cards — top-right of card */
+.hist-delete-btn { padding:2px 5px; background:#1e1a1a; border:1px solid #3a2020; border-radius:4px; color:#f87171; font-size:11px; font-family:inherit; cursor:pointer; line-height:1; opacity:0.75; }
+.hist-delete-btn:hover { background:#2a1a1a; border-color:#ef4444; opacity:1; }
+body.light .hist-delete-btn { background:#fff1f2; border-color:#fecaca; color:#dc2626; }
+/* ── Settings screen ──────────────────────────────── */
+.sett-section { margin-bottom:14px; }
+.sett-section-title { font-size:10px; font-weight:600; color:#6b7280; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px; padding-bottom:5px; border-bottom:1px solid #1e2028; }
+.sett-row { display:flex; align-items:center; justify-content:space-between; padding:7px 0; }
+.sett-row-label { font-size:12px; color:#d1d5db; }
+.sett-row-sub { font-size:10px; color:#6b7280; margin-top:1px; }
+.sett-toggle { width:28px; height:15px; background:#334155; border-radius:8px; cursor:pointer; position:relative; border:none; flex-shrink:0; }
+.sett-thumb { position:absolute; top:2px; left:2px; width:11px; height:11px; border-radius:50%; background:#94a3b8; transition:left 0.15s; }
+/* ── Google Drive account panel ── */
+.gd-signin-btn { width:100%; display:flex; align-items:center; justify-content:center; gap:9px; padding:10px 14px; background:#161e2d; border:1px solid #2a3a55; border-radius:8px; color:#c9d1d9; font-size:12px; font-weight:600; font-family:inherit; cursor:pointer; transition:background 0.15s, border-color 0.15s; }
+.gd-signin-btn:hover { background:#1a2540; border-color:#4285f4; color:#fff; }
+.gd-intro { font-size:11px; color:#6b7280; line-height:1.55; margin-bottom:12px; }
+.gd-setup-notice { font-size:10px; color:#f59e0b; margin-top:10px; padding:6px 9px; background:#1a1400; border:1px solid #78350f55; border-radius:6px; line-height:1.5; }
+.gd-profile { display:flex; align-items:center; gap:10px; padding:10px 12px; background:#0d1117; border:1px solid #1e2a35; border-radius:8px; margin-bottom:12px; }
+.gd-avatar { width:30px; height:30px; border-radius:50%; background:linear-gradient(135deg,#4285f4,#34a853); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:#fff; flex-shrink:0; }
+.gd-info { flex:1; min-width:0; }
+.gd-email { font-size:11px; font-weight:600; color:#c9d1d9; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.gd-uid { font-size:9px; color:#4b5563; font-family:'DM Mono',monospace; margin-top:1px; }
+.gd-signout-btn { font-size:10px; color:#6b7280; background:none; border:1px solid #2a3040; border-radius:5px; padding:4px 8px; cursor:pointer; white-space:nowrap; transition:color 0.15s, border-color 0.15s; }
+.gd-signout-btn:hover { color:#f87171; border-color:#7f1d1d55; }
+.gd-section-title { font-size:10px; font-weight:700; color:#4b5563; letter-spacing:.5px; text-transform:uppercase; margin:14px 0 8px; }
+.gd-row { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:9px 12px; background:#0d1117; border:1px solid #1e2a35; border-radius:7px; margin-bottom:6px; }
+.gd-row-label { font-size:11px; color:#94a3b8; }
+.gd-int-drop { position:relative; }
+.gd-int-btn { min-width:110px; font-size:11px; padding:4px 8px; }
+.gd-btn { width:100%; padding:9px; border-radius:7px; font-size:11px; font-weight:600; font-family:inherit; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:7px; transition:background 0.15s, border-color 0.15s; margin-bottom:6px; }
+.gd-btn-backup { background:#0d2010; border:1px solid #22c55e44; color:#4ade80; }
+.gd-btn-backup:hover { background:#0f2a14; border-color:#22c55e88; }
+.gd-btn-restore { background:#0d1020; border:1px solid #3b82f644; color:#60a5fa; }
+.gd-btn-restore:hover { background:#0f1428; border-color:#3b82f688; }
+.gd-btn:disabled { opacity:0.45; cursor:not-allowed; }
+.gd-last-backup { font-size:10px; color:#4b5563; text-align:center; margin-top:4px; font-family:'DM Mono',monospace; }
+/* restore modal */
+.gd-modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:900; display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity 0.2s; }
+.gd-modal-overlay.open { opacity:1; pointer-events:all; }
+.gd-modal { background:#0e1318; border:1px solid #1e2a35; border-radius:12px; padding:20px; width:280px; max-height:320px; display:flex; flex-direction:column; gap:10px; }
+.gd-modal-title { font-size:13px; font-weight:700; color:#c9d1d9; }
+.gd-backup-list { flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:6px; }
+.gd-backup-item { padding:9px 11px; background:#141b22; border:1px solid #1e2a35; border-radius:7px; cursor:pointer; transition:border-color 0.15s; }
+.gd-backup-item:hover { border-color:#3b82f6; }
+.gd-backup-item-name { font-size:10px; color:#4b5563; font-family:'DM Mono',monospace; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.gd-backup-item-meta { font-size:11px; color:#94a3b8; margin-top:3px; }
+.gd-modal-cancel { padding:8px; background:#0d1117; border:1px solid #1e2a35; border-radius:7px; color:#6b7280; font-size:11px; font-family:inherit; cursor:pointer; }
+.gd-modal-cancel:hover { color:#c9d1d9; }
+/* light mode */
+body.light .gd-signin-btn { background:#f8fafc; border-color:#cbd5e1; color:#374151; }
+body.light .gd-signin-btn:hover { background:#eff6ff; border-color:#4285f4; }
+body.light .gd-setup-notice { color:#92400e; background:#fffbeb; border-color:#fde68a; }
+body.light .gd-profile { background:#f8fafc; border-color:#e2e8f0; }
+body.light .gd-email { color:#111827; }
+body.light .gd-signout-btn { border-color:#e2e8f0; color:#6b7280; }
+body.light .gd-row { background:#f8fafc; border-color:#e2e8f0; }
+body.light .gd-row-label { color:#374151; }
+body.light .gd-btn-backup { background:#f0fdf4; border-color:#86efac; color:#16a34a; }
+body.light .gd-btn-restore { background:#eff6ff; border-color:#bfdbfe; color:#2563eb; }
+body.light .gd-last-backup { color:#9ca3af; }
+body.light .gd-modal { background:#fff; border-color:#e2e8f0; }
+body.light .gd-modal-title { color:#111827; }
+body.light .gd-backup-item { background:#f8fafc; border-color:#e2e8f0; }
+body.light .gd-backup-item-meta { color:#374151; }
+body.light .gd-modal-cancel { background:#f8fafc; border-color:#e2e8f0; }
+/* Google auth sync stub */
+.gd-sync-stub { margin-top:14px; padding:10px 12px; background:#0d1117; border:1px solid #1e3a5566; border-radius:7px; }
+.gd-sync-stub-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:5px; }
+.gd-sync-stub-label { font-size:11px; color:#60a5fa; font-weight:600; }
+.badge-roadmap { font-size:9px; font-weight:700; color:#aaff00; background:#0d200d; border:1px solid #aaff0040; border-radius:4px; padding:2px 5px; letter-spacing:.3px; }
+body.light .gd-sync-stub { background:#eff6ff; border-color:#bfdbfe88; }
+body.light .gd-sync-stub-label { color:#2563eb; }
+body.light .badge-roadmap { color:#15803d; background:#f0fdf4; border-color:#86efac; }
+/* nav variants */
+.btn-nav-trash { background:#1a1010; border-color:#3a1a1a; color:#f87171; justify-content:center; }
+.btn-nav-trash:hover { background:#221212; }
+.btn-nav-settings { background:#161822; border-color:#2a3040; color:#94a3b8; }
+.btn-nav-settings:hover { background:#1a1f30; }
+/* light mode overrides */
+body.light .trash-card { background:#fff; border-color:#e5e7eb; }
+body.light .trash-card-project { color:#111827; }
+body.light .trash-card-meta { color:#9ca3af; }
+body.light .trash-restore-btn { background:#f0fdf4; border-color:#86efac; color:#16a34a; }
+body.light .trash-restore-btn:hover { background:#dcfce7; }
+body.light .trash-delete-btn { background:#fff1f2; border-color:#fecaca; color:#dc2626; }
+body.light .trash-delete-btn:hover { background:#fee2e2; }
+body.light .trash-footer { border-top-color:#e5e7eb; }
+body.light .btn-empty-trash { background:#fff1f2; border-color:#fecaca; color:#dc2626; }
+body.light .btn-empty-trash:hover { background:#fee2e2; }
+body.light .hist-delete-btn { border-color:#f3f4f6; color:#9ca3af; }
+body.light .hist-delete-btn:hover { background:#fff1f2; color:#dc2626; border-color:#fecaca; }
+body.light .sett-section-title { border-bottom-color:#e5e7eb; }
+body.light .sett-row-label { color:#111827; }
+body.light .sett-toggle { background:#e5e7eb; }
+body.light .btn-nav-trash { background:#fff1f2; border-color:#fecaca; color:#dc2626; }
+body.light .btn-nav-settings { background:#f3f4f6; border-color:#e5e7eb; color:#4b5563; }
+.src-warning-box { padding:7px 9px; background:#1a1400; border:1px solid #3d2a0044; border-radius:6px; margin-bottom:8px; font-size:10px; color:#fbbf24; line-height:1.5; }
+body.light .src-warning-box { background:#fffbeb; border-color:#fde68a; color:#92400e; }
+.lang-dropdown { position:relative; }
+.lang-drop-btn { display:flex; align-items:center; gap:6px; background:#161822; border:1px solid #334155; border-radius:6px; color:#c9d1d9; font-size:11px; padding:5px 10px; cursor:pointer; font-family:inherit; min-width:96px; justify-content:space-between; transition:border-color 0.15s; }
+.lang-drop-btn:hover, .lang-drop-btn.open { border-color:#475569; }
+.lang-drop-btn svg { flex-shrink:0; transition:transform 0.15s; }
+.lang-drop-btn.open svg { transform:rotate(180deg); }
+.lang-drop-menu { position:absolute; right:0; top:calc(100% + 4px); background:#161822; border:1px solid #334155; border-radius:6px; overflow:hidden; z-index:200; min-width:100%; box-shadow:0 4px 16px rgba(0,0,0,0.5); }
+.lang-drop-item { display:block; width:100%; text-align:left; padding:6px 10px; font-size:11px; color:#c9d1d9; background:transparent; border:none; cursor:pointer; font-family:inherit; transition:background 0.1s; white-space:nowrap; }
+.lang-drop-item:hover { background:#1e2842; }
+.lang-drop-item.active { color:#aaff00; }
+body.light .lang-drop-btn { background:#f8fafc; border-color:#d1d5db; color:#374151; }
+body.light .lang-drop-btn:hover, body.light .lang-drop-btn.open { border-color:#9ca3af; }
+body.light .lang-drop-menu { background:#fff; border-color:#e5e7eb; box-shadow:0 4px 12px rgba(0,0,0,0.12); }
+body.light .lang-drop-item { color:#374151; }
+body.light .lang-drop-item:hover { background:#f3f4f6; }
+body.light .lang-drop-item.active { color:#16a34a; }
+
+/* ── Spotlight tour ──────────────────────────────── */
+#spOverlay {
+  position:fixed; inset:0; z-index:2000;
+  background:rgba(0,0,0,0.72); pointer-events:all;
+}
+#spTooltip {
+  position:absolute; z-index:2003;
+  background:#161822; border:1px solid #2a3a50;
+  border-radius:10px; padding:16px 16px 14px;
+  width:calc(100% - 28px); max-width:320px;
+  box-shadow:0 8px 32px rgba(0,0,0,0.5);
+  transition:opacity 0.18s;
+}
+.sp-step-num { font-size:10px; color:#aaff00; letter-spacing:1.5px; font-weight:500; margin-bottom:7px; }
+.sp-title    { font-size:13px; font-weight:600; color:#e2e4e9; margin-bottom:7px; letter-spacing:-0.2px; }
+.sp-desc     { font-size:12px; color:#6b7280; line-height:1.65; margin-bottom:12px; }
+.sp-dots     { display:flex; gap:5px; margin-bottom:12px; }
+.sp-dot {
+  height:5px; border-radius:3px; cursor:pointer;
+  background:#2a3a50; width:5px; transition:width 0.2s, background 0.15s;
+}
+.sp-dot.active { background:#aaff00; width:14px; }
+.sp-nav   { display:flex; gap:6px; align-items:center; }
+.sp-btn-back {
+  background:#1c1f2e; border:1px solid #2a3a50; color:#6b7280;
+  border-radius:6px; padding:6px 11px; font-size:11px; font-weight:500;
+  cursor:pointer; font-family:inherit; transition:all 0.15s;
+}
+.sp-btn-back:hover { border-color:rgba(170,255,0,0.4); color:#aaff00; }
+.sp-btn-skip {
+  background:none; border:none; color:#4b5563; font-size:11px;
+  cursor:pointer; font-family:inherit; margin-left:auto; padding:4px 2px;
+  transition:color 0.15s;
+}
+.sp-btn-skip:hover { color:#6b7280; }
+.sp-btn-next {
+  background:#aaff00; border:none; color:#0a0b10; border-radius:6px;
+  padding:6px 13px; font-size:12px; font-weight:700;
+  cursor:pointer; font-family:inherit; transition:background 0.15s;
+}
+.sp-btn-next:hover { background:#ccff44; }
+.sp-highlight {
+  position:relative !important; z-index:2002 !important;
+  border-radius:8px !important; pointer-events:none !important;
+  box-shadow:0 0 0 3px rgba(170,255,0,0.55), 0 0 22px rgba(170,255,0,0.18) !important;
+}
+#spTooltip::before {
+  content:''; position:absolute; width:8px; height:8px;
+  background:#161822; border:1px solid #2a3a50; transform:rotate(45deg);
+  display:none;
+}
+#spTooltip.arr-top::before { display:block; top:-5px; left:20px; border-bottom:none; border-right:none; }
+#spTooltip.arr-bot::before { display:block; bottom:-5px; left:20px; border-top:none; border-left:none; }
+body.light #spTooltip { background:#fff; border-color:#e5e7eb; box-shadow:0 8px 32px rgba(0,0,0,0.12); }
+body.light .sp-step-num { color:#16a34a; }
+body.light .sp-title    { color:#111827; }
+body.light .sp-dot      { background:#e5e7eb; }
+body.light .sp-dot.active { background:#16a34a; }
+body.light .sp-btn-back { background:#f3f4f6; border-color:#e5e7eb; color:#6b7280; }
+body.light .sp-btn-back:hover { border-color:#16a34a; color:#16a34a; }
+body.light .sp-btn-next { background:#16a34a; color:#fff; }
+body.light .sp-btn-next:hover { background:#15803d; }
+body.light #spTooltip::before { background:#fff; border-color:#e5e7eb; }
+body.light .sp-highlight {
+  box-shadow:0 0 0 3px rgba(22,163,74,0.55), 0 0 22px rgba(22,163,74,0.12) !important;
+}
+
+/* ── Settings action buttons (export/import) ────────── */
+.sett-section-divider { border:none; border-top:1px solid #1e2028; margin:8px 0; }
+body.light .sett-section-divider { border-top-color:#e5e7eb; }
+.sett-action-btn {
+  padding:5px 12px; background:#1e2028; border:1px solid #2a3040;
+  border-radius:5px; color:#9ca3af; font-size:10px; cursor:pointer;
+  font-family:inherit; white-space:nowrap; transition:background 0.15s, color 0.15s;
+  flex-shrink:0;
+}
+.sett-action-btn:hover { background:#252830; color:#d1d5db; }
+body.light .sett-action-btn { background:#f3f4f6; border-color:#d1d5db; color:#374151; }
+body.light .sett-action-btn:hover { background:#e5e7eb; }
+
+/* ── Export modal ───────────────────────────────────── */
+.export-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.65); z-index:1500; display:none; align-items:center; justify-content:center; padding:12px; }
+.export-overlay.open { display:flex; }
+.export-modal { background:#161822; border:1px solid #2a3a50; border-radius:12px; width:100%; max-height:calc(100vh - 48px); display:flex; flex-direction:column; overflow:hidden; }
+.export-modal-hdr { display:flex; align-items:center; padding:11px 14px; border-bottom:1px solid #1e2028; }
+.export-modal-title { font-size:13px; font-weight:600; flex:1; }
+.export-modal-close { background:none; border:none; color:#6b7280; cursor:pointer; font-size:15px; padding:2px 5px; font-family:inherit; }
+.export-modal-close:hover { color:#e2e4e9; }
+.export-modal-toolbar { display:flex; align-items:center; gap:6px; padding:7px 12px; border-bottom:1px solid #1e2028; }
+.export-tog { font-size:10px; padding:3px 8px; background:#1a2535; border:1px solid #2a3a50; border-radius:5px; color:#60a5fa; cursor:pointer; font-family:inherit; }
+.export-tog:hover { background:#1c2d42; }
+.export-sel-count { font-size:10px; color:#6b7280; margin-left:auto; }
+.export-snap-list { flex:1; overflow-y:auto; padding:4px 8px; min-height:0; }
+.export-snap-row { display:flex; align-items:center; gap:9px; padding:7px 6px; border-radius:6px; cursor:pointer; }
+.export-snap-row:hover { background:#0f1117; }
+.export-snap-row input[type=checkbox] { width:14px; height:14px; accent-color:#aaff00; cursor:pointer; flex-shrink:0; }
+.export-snap-info { flex:1; min-width:0; }
+.export-snap-proj { font-size:12px; color:#c9d1d9; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.export-snap-meta { font-size:10px; color:#6b7280; }
+.export-modal-ftr { display:flex; gap:6px; padding:10px 12px; border-top:1px solid #1e2028; }
+.export-modal-ftr button { flex:1; padding:8px; border-radius:7px; font-size:12px; font-weight:500; cursor:pointer; font-family:inherit; border:none; transition:background 0.15s; }
+.export-btn-cancel { background:#1e293b; color:#94a3b8; }
+.export-btn-cancel:hover { background:#243044; }
+.export-btn-confirm { background:#aaff00; color:#111; }
+.export-btn-confirm:hover { background:#ccff00; }
+.export-btn-confirm:disabled { background:#334155; color:#6b7280; cursor:not-allowed; }
+body.light .export-modal { background:#fff; border-color:#e5e7eb; }
+body.light .export-modal-hdr, body.light .export-modal-toolbar, body.light .export-modal-ftr { border-color:#e5e7eb; }
+body.light .export-modal-title { color:#111318; }
+body.light .export-snap-proj { color:#374151; }
+body.light .export-snap-row:hover { background:#f3f4f6; }
+body.light .export-btn-cancel { background:#f3f4f6; color:#374151; }
+body.light .export-btn-cancel:hover { background:#e5e7eb; }
+
+
+/* ── Screen: Donate ── */
+.donate-content { padding: 4px 0 16px; overflow-y: auto; }
+.donate-s-title { font-size: 12px; font-weight: 600; color: #c9d1d9; margin: 16px 0 5px; }
+.donate-s-title:first-child { margin-top: 4px; }
+.donate-s-body { font-size: 11px; color: #9ca3af; line-height: 1.65; margin-bottom: 4px; }
+body.light .donate-s-title { color: #374151; }
+body.light .donate-s-body { color: #6b7280; }
+/* ── Crypto wallets ── */
+.donate-crypto { margin-top: 14px; }
+.crypto-row { background: #0d1117; border: 1px solid #1e2028; border-radius: 6px; padding: 7px 10px; margin-bottom: 5px; }
+.crypto-meta { font-size: 10px; font-weight: 600; color: #9ca3af; margin-bottom: 3px; }
+.crypto-net { color: #6b7280; font-weight: 400; margin-left: 4px; }
+.crypto-addr-row { display: flex; align-items: center; gap: 6px; }
+.crypto-addr { font-size: 9px; color: #60a5fa; font-family: 'DM Mono',monospace; flex: 1; word-break: break-all; line-height: 1.4; }
+.crypto-copy { background: none; border: 1px solid #2a3a50; border-radius: 3px; color: #6b7280; cursor: pointer; padding: 3px 5px; flex-shrink: 0; transition: border-color .15s, color .15s; }
+.crypto-copy:hover { border-color: #aaff00; color: #aaff00; }
+.crypto-copy.copied { border-color: #22c55e; color: #22c55e; }
+body.light .crypto-row { background: #f9fafb; border-color: #e5e7eb; }
+body.light .crypto-meta { color: #374151; }
+body.light .crypto-addr { color: #1d4ed8; }
+/* ── Donate accordion ── */
+.donate-section { border-bottom: 1px solid #1e2028; }
+.donate-section:last-child { border-bottom: none; }
+.donate-acc-hdr { cursor: pointer; user-select: none; display: flex; justify-content: space-between; align-items: center; padding-right: 2px; }
+.donate-acc-hdr::after { content: '▾'; font-size: 12px; color: #6b7280; transition: transform .2s; flex-shrink: 0; margin-left: 4px; }
+.donate-section.collapsed .donate-acc-hdr::after { transform: rotate(-90deg); }
+.donate-acc-body { overflow: hidden; max-height: 2000px; transition: max-height .35s ease; }
+.donate-section.collapsed .donate-acc-body { max-height: 0; }
+.donate-crypto-title { margin-top: 12px; font-size: 11px; color: #6b7280; }
+body.light .donate-section { border-bottom-color: #e5e7eb; }
+
+/* ── Prompts: header button ──────────────────────────── */
+.hdr-prompts-btn {
+  display:flex; align-items:center; gap:4px;
+  padding:3px 8px;
+  background:#111a0d; border:1px solid #aaff0044; border-radius:6px;
+  color:#aaff00; font-size:10px; font-weight:500; font-family:inherit;
+  cursor:pointer; transition:background 0.15s, border-color 0.15s, box-shadow 0.15s; flex-shrink:0;
+  white-space:nowrap; box-shadow:0 0 8px #aaff0018;
+}
+.hdr-prompts-btn:hover { background:#1a2a08; border-color:#aaff0088; box-shadow:0 0 12px #aaff0030; }
+.hdr-prompts-btn svg { flex-shrink:0; }
+body.light .hdr-prompts-btn { background:#f0fdf4; border-color:#86efac; color:#16a34a; box-shadow:0 0 8px #86efac40; }
+body.light .hdr-prompts-btn:hover { background:#dcfce7; border-color:#4ade80; }
+/* Перенос — highlighted back button */
+#btnPromptsBack {
+  background:#0a1628; border-color:#3b82f6; border-width:1px;
+  box-shadow:0 0 10px #3b82f622; font-weight:500;
+}
+#btnPromptsBack:hover { background:#0e1e38; border-color:#60a5fa; box-shadow:0 0 14px #60a5fa30; }
+
+/* ── Prompts: library screen ─────────────────────────── */
+.pr-toolbar { display:flex; gap:6px; align-items:center; }
+.pr-toolbar-btn {
+  display:flex; align-items:center; gap:4px;
+  padding:5px 8px; border-radius:6px; font-size:10px; font-weight:500;
+  font-family:inherit; cursor:pointer; transition:background 0.15s;
+  border:1px solid; white-space:nowrap;
+}
+.pr-btn-create { background:#1a2a08; border-color:#aaff0044; color:#aaff00; }
+.pr-btn-create:hover { background:#223a0c; }
+body.light .pr-btn-create { background:#f0fdf4; border-color:#86efac; color:#16a34a; }
+.pr-btn-sync { background:#161822; border-color:#2a3a50; color:#60a5fa; }
+.pr-btn-sync:hover { background:#1a2535; }
+body.light .pr-btn-sync { background:#eff6ff; border-color:#bfdbfe; color:#2563eb; }
+.pr-sync-hdr-btn {
+  background:none; border:none; cursor:pointer; color:#4b5563;
+  padding:2px 3px; border-radius:4px; display:flex; align-items:center; margin-left:2px;
+}
+.pr-sync-hdr-btn:hover { color:#60a5fa; }
+.pr-group-fav { color:#aaff00; }
+.pr-btn-trash-nav { background:#1a1010; border-color:#3a1a1a; color:#f87171; margin-left:auto; }
+.pr-btn-trash-nav:hover { background:#221212; }
+body.light .pr-btn-trash-nav { background:#fff1f2; border-color:#fecaca; color:#dc2626; }
+
+/* Search */
+.pr-search {
+  width:100%; padding:7px 10px; background:#0d1117; border:1px solid #1e2028;
+  border-radius:6px; color:#e2e4e9; font-size:11px; font-family:inherit; outline:none;
+}
+.pr-search:focus { border-color:#aaff0044; }
+.pr-search::placeholder { color:#4b5563; }
+body.light .pr-search { background:#f8fafc; border-color:#e5e7eb; color:#111827; }
+body.light .pr-search::placeholder { color:#9ca3af; }
+body.light .pr-search:focus { border-color:#aaff0088; }
+
+
+/* Prompt groups */
+.pr-group-hdr {
+  display:flex; align-items:center; gap:5px; font-size:11px; font-weight:600;
+  color:#6b7280; cursor:pointer; user-select:none; padding:7px 0 5px;
+  border:none; background:none; width:100%; text-align:left; font-family:inherit;
+}
+.pr-group-hdr:hover .pr-group-name { color:#aaff00; }
+.pr-group-arrow { font-size:10px; color:#4b5563; transition:transform .2s; flex-shrink:0; }
+.pr-group.collapsed .pr-group-arrow { transform:rotate(-90deg); }
+.pr-group-name { color:#aaff00; }
+body.light .pr-group-name { color:#16a34a; }
+.pr-group-count { color:#4b5563; font-weight:400; }
+.pr-group-line { flex:1; height:1px; background:#1e2028; }
+body.light .pr-group-line { background:#e5e7eb; }
+.pr-group-cards { overflow:hidden; max-height:10000px; transition:max-height .3s ease; }
+.pr-group.collapsed .pr-group-cards { max-height:0; }
+
+/* Prompt cards */
+.pr-card {
+  background:#161822; border:1px solid #1e2028; border-radius:8px;
+  padding:11px; margin-bottom:8px; transition:border-color 0.15s;
+}
+.pr-card:hover { border-color:#2a3a50; }
+.pr-card.pr-card-fav { border-left:3px solid #aaff00; }
+body.light .pr-card { background:#fff; border-color:#e5e7eb; }
+body.light .pr-card:hover { border-color:#d1d5db; }
+body.light .pr-card.pr-card-fav { border-left-color:#16a34a; }
+.pr-card-header { display:flex; align-items:center; gap:5px; margin-bottom:3px; }
+.pr-card-star { color:#aaff00; font-size:11px; }
+.pr-card-title { font-size:12px; font-weight:600; color:#e5e7eb; flex:1;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+body.light .pr-card-title { color:#111827; }
+.pr-card-desc { font-size:10px; color:#6b7280; margin-bottom:4px;
+  display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical; overflow:hidden; }
+.pr-card-preview { font-size:10px; color:#4b5563; margin-bottom:6px; line-height:1.4;
+  font-family:'SF Mono','Cascadia Code','Fira Code',monospace;
+  background:#0d1117; border-radius:4px; padding:6px 8px;
+  max-height:48px; overflow:hidden; word-break:break-word; }
+body.light .pr-card-preview { background:#f8fafc; color:#64748b; }
+.pr-card-meta { display:flex; flex-wrap:wrap; gap:4px; align-items:center; margin-bottom:8px; }
+.pr-tag-pill {
+  font-size:9px; padding:2px 6px; border-radius:4px;
+  background:#1a2a08; border:1px solid #aaff0030; color:#aaff00;
+  font-weight:500;
+}
+body.light .pr-tag-pill { background:#f0fdf4; border-color:#86efac; color:#16a34a; }
+.pr-file-indicator { font-size:9px; color:#6b7280; }
+.pr-card-actions { display:flex; gap:6px; align-items:center; }
+.pr-btn-insert {
+  display:flex; align-items:center; gap:4px; flex:1;
+  padding:6px 10px; border-radius:6px; font-size:10px; font-weight:500;
+  font-family:inherit; cursor:pointer; justify-content:center;
+  background:#1a2a08; border:1px solid #aaff0044; color:#aaff00;
+  transition:background 0.15s;
+}
+.pr-btn-insert:hover { background:#223a0c; border-color:#aaff0088; }
+body.light .pr-btn-insert { background:#f0fdf4; border-color:#86efac; color:#16a34a; }
+body.light .pr-btn-insert:hover { background:#dcfce7; }
+.pr-btn-edit {
+  display:flex; align-items:center; gap:3px;
+  padding:6px 8px; border-radius:6px; font-size:10px;
+  font-family:inherit; cursor:pointer;
+  background:#161822; border:1px solid #2a3a50; color:#94a3b8;
+  transition:background 0.15s;
+}
+.pr-btn-edit:hover { background:#1a2535; color:#c9d1d9; }
+body.light .pr-btn-edit { background:#f3f4f6; border-color:#e5e7eb; color:#4b5563; }
+.pr-btn-del {
+  padding:6px; border-radius:6px; cursor:pointer;
+  background:none; border:1px solid transparent; color:#4b5563;
+  transition:all 0.15s; display:flex; align-items:center;
+}
+.pr-btn-del:hover { border-color:#ef444444; color:#f87171; background:#1a1010; }
+body.light .pr-btn-del:hover { background:#fff1f2; color:#dc2626; border-color:#fecaca; }
+
+/* Empty state */
+.pr-empty-state { text-align:center; padding:30px 10px; }
+.pr-empty-state-title { font-size:13px; color:#6b7280; margin-bottom:6px; }
+.pr-empty-state-sub { font-size:11px; color:#4b5563; margin-bottom:14px; }
+.pr-empty-state-btn {
+  display:inline-flex; align-items:center; gap:4px;
+  padding:8px 16px; border-radius:8px; font-size:12px; font-weight:500;
+  font-family:inherit; cursor:pointer;
+  background:#1a2a08; border:1px solid #aaff0044; color:#aaff00;
+}
+.pr-empty-state-btn:hover { background:#223a0c; }
+body.light .pr-empty-state-btn { background:#f0fdf4; border-color:#86efac; color:#16a34a; }
+.pr-empty-filtered { text-align:center; padding:20px 0; color:#4b5563; font-size:11px; }
+.pr-list { flex:1; overflow-y:auto; padding-bottom:8px; min-height:0; }
+
+/* ── Prompts: editor screen ──────────────────────────── */
+.pe-form { display:flex; flex-direction:column; gap:10px; }
+.pe-input {
+  width:100%; padding:8px 10px; background:#0d1117; border:1px solid #1e2028;
+  border-radius:6px; color:#e2e4e9; font-size:12px; font-family:inherit; outline:none;
+}
+.pe-input:focus { border-color:#aaff0044; }
+.pe-input::placeholder { color:#4b5563; }
+body.light .pe-input { background:#f8fafc; border-color:#e5e7eb; color:#111827; }
+body.light .pe-input::placeholder { color:#9ca3af; }
+.pe-textarea {
+  width:100%; min-height:120px; max-height:300px; resize:vertical;
+  padding:10px; background:#0d1117; border:1px solid #1e2028; border-radius:8px;
+  color:#e2e4e9; font-size:12px; font-family:inherit; line-height:1.5; outline:none;
+}
+.pe-textarea:focus { border-color:#aaff0044; }
+.pe-textarea::placeholder { color:#4b5563; }
+body.light .pe-textarea { background:#f8fafc; border-color:#e5e7eb; color:#111827; }
+body.light .pe-textarea::placeholder { color:#9ca3af; }
+.pe-char-count { font-size:9px; color:#4b5563; text-align:right; margin-top:-6px; }
+.pe-var-hint {
+  font-size:10px; color:#60a5fa; padding:4px 8px;
+  background:#60a5fa11; border-radius:4px; display:none;
+}
+body.light .pe-var-hint { color:#2563eb; background:#eff6ff; }
+/* ── Inline tag editor (pills + input in one flowing row) ── */
+.pe-tags-wrap {
+  display:flex; flex-wrap:wrap; gap:5px; align-items:center;
+  padding:4px 2px; min-height:30px;
+}
+.pe-tag-input-wrap {
+  position:relative; flex:0 0 auto; width:fit-content; min-width:0;
+  display:inline-flex; align-items:center; gap:3px; overflow:visible;
+}
+.pe-tag-input-inline {
+  display:block; border:1.5px dashed #2a3a50; border-radius:20px;
+  padding:3px 11px; background:transparent;
+  color:#6b7280; font-size:11px; font-family:inherit; outline:none;
+  width:72px; max-width:150px; min-width:0;
+  transition:width .15s, border-color .15s; overflow:hidden; text-overflow:ellipsis;
+}
+.pe-tag-input-inline::placeholder { color:#4b5563; font-style:italic; }
+.pe-tag-input-inline:focus { border-color:#aaff0055; border-style:solid; color:#e2e4e9; }
+body.light .pe-tag-input-inline { color:#9ca3af; }
+body.light .pe-tag-input-inline:focus { border-color:#16a34a88; color:#111827; }
+.pe-tag-confirm-btn {
+  display:none; align-items:center; justify-content:center;
+  background:none; border:none; cursor:pointer;
+  color:#aaff00; font-size:14px; font-weight:700; line-height:1; padding:0 2px; flex-shrink:0;
+}
+.pe-tag-confirm-btn:hover { opacity:0.75; }
+/* Теги в редакторе — outlined pill как в макете */
+.pe-tags-wrap .pr-tag-pill {
+  border-radius:20px; padding:4px 10px; font-size:11px; cursor:default;
+  background:transparent; border:1.5px solid #aaff0066; color:#aaff00;
+  font-weight:500; display:inline-flex; align-items:center; gap:2px;
+}
+body.light .pe-tags-wrap .pr-tag-pill { background:transparent; border-color:#16a34a66; color:#16a34a; }
+.pr-tag-x { cursor:pointer; margin-left:2px; font-weight:700; font-size:12px; opacity:0.6; line-height:1; }
+.pr-tag-x:hover { opacity:1; color:#f87171; }
+.pe-file-btn {
+  display:flex; align-items:center; gap:4px;
+  padding:6px 10px; border-radius:6px; font-size:11px;
+  font-family:inherit; cursor:pointer;
+  background:#161822; border:1px solid #2a3a50; color:#94a3b8;
+}
+.pe-file-btn:hover { background:#1a2535; color:#c9d1d9; }
+body.light .pe-file-btn { background:#f3f4f6; border-color:#e5e7eb; color:#4b5563; }
+.pr-file-row {
+  display:flex; align-items:center; justify-content:space-between; gap:6px;
+  font-size:11px; color:#c9d1d9; padding:6px 8px;
+  background:#0d1117; border-radius:6px;
+}
+body.light .pr-file-row { background:#f8fafc; color:#374151; }
+.pr-file-size { color:#4b5563; }
+.pr-file-remove { background:none; border:none; color:#f87171; cursor:pointer; font-size:14px; padding:0 2px; }
+.pe-fav-btn {
+  display:flex; align-items:center; gap:4px;
+  padding:6px 10px; border-radius:6px; font-size:11px;
+  font-family:inherit; cursor:pointer;
+  background:#161822; border:1px solid #2a3a50; color:#6b7280;
+  transition:all 0.15s;
+}
+.pe-fav-btn.active { background:#1a2a08; border-color:#aaff0044; color:#aaff00; }
+.pe-fav-btn:hover { border-color:#aaff0044; }
+body.light .pe-fav-btn { background:#f3f4f6; border-color:#e5e7eb; }
+body.light .pe-fav-btn.active { background:#f0fdf4; border-color:#86efac; color:#16a34a; }
+.pe-field-label { font-size:10px; color:#6b7280; font-weight:600; margin-bottom:-4px; }
+body.light .pe-field-label { color:#6b7280; }
+.pe-preview-section { margin-top:4px; }
+.pe-preview-label { font-size:10px; color:#6b7280; margin-bottom:4px; font-weight:600; }
+.pe-preview-box {
+  font-size:11px; color:#c9d1d9; line-height:1.5;
+  padding:8px 10px; background:#0d1117; border:1px solid #1e2028;
+  border-radius:6px; max-height:120px; overflow-y:auto; white-space:pre-wrap;
+  word-break:break-word;
+}
+body.light .pe-preview-box { background:#f8fafc; border-color:#e5e7eb; color:#374151; }
+.pr-preview-empty { color:#4b5563; font-style:italic; }
+.pr-var-highlight { background:#aaff0022; color:#aaff00; border-radius:2px; padding:0 2px; }
+body.light .pr-var-highlight { background:#dcfce7; color:#16a34a; }
+.pe-bottom-actions { display:flex; gap:6px; margin-top:4px; }
+.pe-btn-save {
+  flex:1; padding:8px; border-radius:7px; font-size:12px; font-weight:600;
+  font-family:inherit; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;
+  background:#1a3a2a; border:1px solid #22c55e44; color:#4ade80;
+  transition:background 0.15s;
+}
+.pe-btn-save:hover { background:#1e4030; }
+body.light .pe-btn-save { background:#f0fdf4; border-color:#86efac; color:#16a34a; }
+.pe-btn-delete {
+  padding:8px 12px; border-radius:7px; font-size:12px;
+  font-family:inherit; cursor:pointer;
+  background:#2a1a1a; border:1px solid #ef444444; color:#f87171;
+}
+.pe-btn-delete:hover { background:#3a1a1a; }
+body.light .pe-btn-delete { background:#fff1f2; border-color:#fecaca; color:#dc2626; }
+
+/* ── Prompts: trash screen ───────────────────────────── */
+.pr-trash-card {
+  background:#161822; border:1px solid #1e2028; border-radius:8px;
+  padding:11px; margin-bottom:8px;
+}
+body.light .pr-trash-card { background:#fff; border-color:#e5e7eb; }
+.pr-trash-title { font-size:12px; font-weight:500; color:#e5e7eb; margin-bottom:3px; }
+body.light .pr-trash-title { color:#111827; }
+.pr-trash-meta { font-size:10px; color:#6b7280; margin-bottom:8px; }
+.pr-trash-actions { display:flex; gap:6px; }
+.pr-trash-restore {
+  flex:1; padding:5px 8px; background:#1a3a2a; border:1px solid #22c55e44;
+  border-radius:6px; color:#4ade80; font-size:10px; font-family:inherit; cursor:pointer;
+}
+.pr-trash-restore:hover { background:#1e4030; }
+body.light .pr-trash-restore { background:#f0fdf4; border-color:#86efac; color:#16a34a; }
+.pr-trash-permadel {
+  padding:5px 8px; background:#2a1a1a; border:1px solid #ef444444;
+  border-radius:6px; color:#f87171; font-size:10px; font-family:inherit; cursor:pointer;
+}
+.pr-trash-permadel:hover { background:#3a1a1a; }
+body.light .pr-trash-permadel { background:#fff1f2; border-color:#fecaca; color:#dc2626; }
+.pr-trash-empty { text-align:center; padding:30px 0; color:#4b5563; font-size:12px; }
+/* ── Prompts screen heights (match screenHistory pattern) ── */
+#screenPrompts { height: calc(100vh - 28px); overflow: hidden; }
+#screenPromptTrash { height: calc(100vh - 28px); overflow-y: auto; }
+#screenPromptEdit { height: calc(100vh - 28px); overflow-y: auto; }
+
+
+/* ── Prompts: compact card ── */
+.pr-card-icon { color:#4b5563; flex-shrink:0; }
+.pr-card-footer { display:flex; align-items:center; justify-content:space-between; gap:6px; margin-top:7px; }
+.pr-card-footer .pr-card-meta { margin-bottom:0; flex:1; }
+.pr-card-footer .pr-btn-insert { flex:none; }
+.pr-card-text-preview { color:#4b5563; font-style:italic; }
+.pr-btn-edit-hdr { padding:3px 5px; margin-left:auto; flex-shrink:0; }
+
+/* ── Tag pool (все теги, серые/зелёные) ── */
+.pe-tags-pool { display:flex; flex-wrap:wrap; gap:5px; padding:2px 0; }
+.pe-pool-tag {
+  border-radius:20px; padding:4px 10px; font-size:11px; cursor:pointer;
+  background:transparent; border:1.5px solid #2a3a50; color:#6b7280;
+  font-family:inherit; font-weight:500; transition:all .15s;
+}
+.pe-pool-tag:hover { border-color:#aaff0033; color:#94a3b8; }
+.pe-pool-tag.selected { border-color:#aaff0066; color:#aaff00; background:#1a2a0833; }
+body.light .pe-pool-tag { border-color:#d1d5db; color:#6b7280; }
+body.light .pe-pool-tag.selected { border-color:#16a34a66; color:#16a34a; background:#f0fdf4; }
+
+/* ── Drag & drop zone ── */
+.pe-drop-zone {
+  border:1.5px dashed #2a3a50; border-radius:8px; padding:14px 10px;
+  text-align:center; cursor:pointer; color:#4b5563; font-size:10px;
+  transition:border-color .15s, background .15s; user-select:none;
+}
+.pe-drop-zone:hover, .pe-drop-zone.drag-over {
+  border-color:#aaff0066; background:#1a2a0844; color:#aaff00;
+}
+.pe-drop-zone svg { display:block; margin:0 auto 5px; opacity:.5; }
+body.light .pe-drop-zone { border-color:#e5e7eb; color:#9ca3af; }
+body.light .pe-drop-zone:hover, body.light .pe-drop-zone.drag-over {
+  border-color:#86efac; background:#f0fdf4; color:#16a34a;
+}
+
+/* ── Collapsible preview ── */
+.pe-preview-hdr {
+  display:flex; align-items:center; gap:5px; cursor:pointer;
+  background:none; border:none; padding:0 0 4px; width:100%; text-align:left;
+  font-family:inherit;
+}
+.pe-preview-label { font-size:10px; color:#6b7280; font-weight:600; }
+.pe-preview-arrow { font-size:10px; color:#4b5563; transition:transform .2s; flex-shrink:0; }
+.pe-preview-body { overflow:hidden; max-height:200px; transition:max-height .25s ease; }
+.pe-collapsed .pe-preview-body { max-height:0; }
+
+/* ── Required field asterisk ── */
+.pe-required-star { color:#f87171; margin-left:2px; }
+.pe-input.pe-error { border-color:#ef444466 !important; }
+</style>
+</head>
+<body>
+
+<!-- SPOTLIGHT TOUR -->
+<div id="spOverlay" style="display:none">
+  <div id="spTooltip" style="display:none;opacity:0">
+    <div class="sp-step-num" id="spStepNum"></div>
+    <div class="sp-title"    id="spTitle"></div>
+    <div class="sp-desc"     id="spDesc"></div>
+    <div class="sp-dots"     id="spDots"></div>
+    <div class="sp-nav">
+      <button class="sp-btn-back" id="spBack"></button>
+      <button class="sp-btn-skip" id="spSkip"></button>
+      <button class="sp-btn-next" id="spNext"></button>
+    </div>
+  </div>
+</div>
+
+<!-- EXPORT SELECT MODAL                            -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="export-overlay" id="exportModalOverlay">
+  <div class="export-modal">
+    <div class="export-modal-hdr">
+      <span class="export-modal-title" data-i18n="sett.export_modal_title">Экспорт слепков</span>
+      <button class="export-modal-close" id="exportModalClose">✕</button>
+    </div>
+    <div class="export-modal-toolbar">
+      <button class="export-tog" id="exportSelectAll" data-i18n="sett.export_sel_all">Выбрать все</button>
+      <button class="export-tog" id="exportSelectNone" data-i18n="sett.export_sel_none">Сбросить</button>
+      <span class="export-sel-count" id="exportSelCount">0 / 0</span>
+    </div>
+    <div class="export-snap-list" id="exportSnapList"></div>
+    <div class="export-modal-ftr">
+      <button class="export-btn-cancel" id="exportModalCancel" data-i18n="sett.export_cancel">Отмена</button>
+      <button class="export-btn-confirm" id="exportModalConfirm" disabled></button>
+    </div>
+  </div></div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- SCREEN: MAIN                                   -->
+<!-- ══════════════════════════════════════════════ -->
+<div id="screenMain" class="screen visible">
+
+  <!-- Header -->
+  <div class="hdr">
+    <img src="icons/icon128.png" class="hdr-logo" alt="">
+    <span class="hdr-ver" id="hdrVer">v1.0</span>
+    <div id="themeToggle" class="theme-toggle">
+      <div id="themeThumb" class="theme-thumb"></div>
+    </div>
+    <button class="hdr-prompts-btn" id="btnPrompts" title="Промпт-библиотека" aria-label="Промпт-библиотека">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+        <rect x="1.5" y="0.5" width="9" height="11" rx="1.5" stroke="currentColor" stroke-width="1.2"/>
+        <path d="M4 3.5h4M4 5.5h4M4 7.5h2" stroke="currentColor" stroke-width="1" stroke-linecap="round"/>
+      </svg>
+      <span data-i18n="prompts.nav_label">Промпты</span>
+    </button>
+    <button class="hdr-account-btn" id="btnAccount" data-i18n-title="hdr.account_title" data-i18n-aria="hdr.account_aria" title="Аккаунт и настройки" aria-label="Аккаунт и настройки">
+      <svg width="17" height="17" viewBox="0 0 17 17" fill="none">
+        <circle cx="8.5" cy="6" r="3.5" fill="#a78bfa"/>
+        <path d="M1 16.5c0-4.14 3.36-7.5 7.5-7.5s7.5 3.36 7.5 7.5" fill="#a78bfa"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Test button strip -->
+  <div class="test-strip">
+    <button class="test-strip-btn" id="btnTest" data-i18n-title="test.title" data-i18n="test.btn" title="Загружает тестовый слепок и автоматически вставляет контекст + файл в активную LLM-вкладку. История снапшотов не засоряется.">
+      🧪 Тест автовставки
+    </button>
+  </div>
+  <!-- Project bar -->
+  <div class="proj-bar" id="projBar">
+    <div class="proj-dot"></div>
+    <span class="proj-name" id="projName" data-i18n-default="proj.no_project">Нет активного проекта</span>
+    <button class="proj-pencil" id="projRenameBtn" data-i18n-title="proj.rename_title" data-i18n-aria="proj.rename_aria" title="Переименовать" aria-label="Переименовать проект">
+      <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M7.5 1.5l2 2L3 10H1V8L7.5 1.5z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+    </button>
+    <button class="proj-info" id="projInfoBtn" title="Описание проекта" aria-label="Описание проекта">
+      <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><circle cx="6.5" cy="6.5" r="5.5" stroke="currentColor" stroke-width="1.2"/><rect x="6" y="5.5" width="1" height="4" rx="0.4" fill="currentColor"/><circle cx="6.5" cy="4" r="0.7" fill="currentColor"/></svg>
+    </button>
+    <button class="proj-chevron" id="projChevronBtn" data-i18n-title="proj.select_title" data-i18n-aria="proj.select_aria" title="Выбрать проект" aria-label="Выбрать проект">
+      <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 3.5l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </button>
+    <div class="proj-add" id="projAddBtn" data-i18n-title="proj.add_title" title="Новый проект">
+      <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M5 1v8M1 5h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </div>
+  </div>
+  <div class="proj-dd" id="projDD"></div>
+
+  <!-- v1.2 Active snapshot card (раскрывается по клику на chevron в proj-bar) -->
+  <div class="snap-card" id="snapCard">
+    <div class="snap-card-row">
+      <div><div class="k" data-i18n="snap.goal">Цель</div><div class="v" id="snapGoal">—</div></div>
+      <div><div class="k" data-i18n="snap.status">Статус</div><div class="v" id="snapStatus">—</div></div>
+    </div>
+    <div>
+      <div class="snap-card-next" data-i18n="snap.next_step">Следующий шаг</div>
+      <div class="snap-card-next-v" id="snapNext">—</div>
+    </div>
+    <div class="snap-card-decisions">
+      <div class="k" data-i18n="snap.decisions">Ключевые решения</div>
+      <ul id="snapDecisions"><li style="color:#6b7280;" data-i18n="snap.no_decisions">нет решений</li></ul>
+    </div>
+  </div>
+
+  <!-- Transfer mode tabs -->
+  <div class="transfer-tabs" id="transferTabs">
+    <button class="trans-tab active-simple" id="tabSimple"><svg width="11" height="13" viewBox="0 0 11 13" fill="none" style="vertical-align:-1px"><path d="M6.5 1L1 7h4L3 12L10 6H6L6.5 1z" fill="currentColor"/></svg> <span data-i18n="tab.simple">Простой</span></button>
+    <button class="trans-tab" id="tabExtended"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" style="vertical-align:-1px"><circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.5"/><circle cx="6" cy="6" r="1.5" fill="currentColor"/></svg> <span data-i18n="tab.extended">Расширенный</span></button>
+    <button class="trans-tab-reset" id="btnResetFlow" data-i18n-title="tab.reset_title" data-i18n-aria="tab.reset_aria" title="Сбросить состояние переноса и начать заново" aria-label="Сбросить перенос">↺</button>
+  </div>
+
+  <!-- Simple transfer -->
+  <div class="section open" id="sectionSimple">
+    <div class="section-body" style="padding-top:10px;">
+      <div class="section-desc" data-i18n="simple.desc">Автоматический анализ сессии. Модель сама определит ключевые решения, правила и контекст.</div>
+
+      <div class="checklist" id="checklistSimple" data-steps="3">
+        <div class="checklist-overlay" id="overlaySimple" style="display:none;">
+          <span class="checklist-overlay-text" data-i18n="simple.overlay">✓ Перенос сохранён</span>
+        </div>
+        <button class="step-btn btn-simple state-wait" id="btnSimple1">
+          <span class="step-marker">
+            <span class="step-num">1</span>
+            <svg class="step-check" viewBox="0 0 12 12" fill="none"><path d="M2 6 L5 9 L10 3" stroke="#0e1118" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+          <span class="step-body">
+            <span class="step-label" data-i18n="simple.step1.label">Анализ сессии</span>
+            <span class="step-hint" data-i18n="simple.step1.hint">вставит промпт в активный чат</span>
+          </span>
+          <span class="state-badge" data-i18n="badge.waiting">ждёт</span>
+        </button>
+
+        <button class="step-btn btn-simple state-wait dimmed" id="btnSimple2">
+          <span class="step-marker">
+            <span class="step-num">2</span>
+            <svg class="step-check" viewBox="0 0 12 12" fill="none"><path d="M2 6 L5 9 L10 3" stroke="#0e1118" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+          <span class="step-body">
+            <span class="step-label" data-i18n="simple.step2.label">Подтвердить перенос</span>
+            <span class="step-hint" data-i18n="simple.step2.hint">захватит JSON из ответа модели</span>
+          </span>
+          <span class="state-badge" data-i18n="badge.waiting">ждёт</span>
+        </button>
+
+        <button class="step-btn btn-simple state-wait dimmed" id="btnSimple3">
+          <span class="step-marker">
+            <span class="step-num">3</span>
+            <svg class="step-check" viewBox="0 0 12 12" fill="none"><path d="M2 6 L5 9 L10 3" stroke="#0e1118" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+          <span class="step-body">
+            <span class="step-label" data-i18n="simple.step3.label">Сохранить перенос</span>
+            <span class="step-hint" data-i18n="simple.step3.hint">сохранит в историю и откроет вставку</span>
+          </span>
+          <span class="state-badge" data-i18n="badge.waiting">ждёт</span>
+        </button>
+      </div>
+
+      <div class="progress-wrap" id="progressWrap"><div class="progress-bar" id="progressBar"></div></div>
+    </div>
+  </div>
+
+  <!-- Extended transfer -->
+  <div class="section" id="sectionExtended">
+    <div class="section-body" style="padding-top:10px;">
+      <div class="section-desc" data-i18n="ext.desc">Полный контроль: уточняющие вопросы, проверка якорей, финальная генерация.</div>
+
+      <div class="checklist" id="checklistExtended" data-steps="4">
+        <div class="checklist-overlay" id="overlayExtended" style="display:none;">
+          <span class="checklist-overlay-text" data-i18n="ext.overlay">✓ Перенос сохранён</span>
+        </div>
+        <button class="step-btn btn-extended state-wait" id="btnExt1">
+          <span class="step-marker">
+            <span class="step-num">1</span>
+            <svg class="step-check" viewBox="0 0 12 12" fill="none"><path d="M2 6 L5 9 L10 3" stroke="#0e1118" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+          <span class="step-body">
+            <span class="step-label" data-i18n="ext.step1.label">Подготовка</span>
+            <span class="step-hint" data-i18n="ext.step1.hint">подготовительный промпт</span>
+          </span>
+          <span class="state-badge" data-i18n="badge.waiting">ждёт</span>
+        </button>
+
+        <button class="step-btn btn-extended state-wait dimmed" id="btnExt2">
+          <span class="step-marker">
+            <span class="step-num">2</span>
+            <svg class="step-check" viewBox="0 0 12 12" fill="none"><path d="M2 6 L5 9 L10 3" stroke="#0e1118" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+          <span class="step-body">
+            <span class="step-label" data-i18n="ext.step2.label">Проверка якорей</span>
+            <span class="step-hint" data-i18n="ext.step2.hint">6 якорей: GOAL · CONTEXT · DECISIONS · …</span>
+          </span>
+          <span class="state-badge" data-i18n="badge.waiting">ждёт</span>
+        </button>
+
+        <button class="step-btn btn-extended state-wait dimmed" id="btnExt3">
+          <span class="step-marker">
+            <span class="step-num">3</span>
+            <svg class="step-check" viewBox="0 0 12 12" fill="none"><path d="M2 6 L5 9 L10 3" stroke="#0e1118" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+          <span class="step-body">
+            <span class="step-label" data-i18n="ext.step3.label">Финальный перенос</span>
+            <span class="step-hint" data-i18n="ext.step3.hint">генерация JSON слепка</span>
+          </span>
+          <span class="state-badge" data-i18n="badge.waiting">ждёт</span>
+        </button>
+
+        <button class="step-btn btn-extended state-wait dimmed" id="btnExt4">
+          <span class="step-marker">
+            <span class="step-num">4</span>
+            <svg class="step-check" viewBox="0 0 12 12" fill="none"><path d="M2 6 L5 9 L10 3" stroke="#0e1118" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+          <span class="step-body">
+            <span class="step-label" data-i18n="ext.step4.label">Сохранить перенос</span>
+            <span class="step-hint" data-i18n="ext.step4.hint">сохранит в историю и откроет вставку</span>
+          </span>
+          <span class="state-badge" data-i18n="badge.waiting">ждёт</span>
+        </button>
+      </div>
+
+      <div class="progress-wrap" id="progressWrapExt"><div class="progress-bar" id="progressBarExt"></div></div>
+    </div>
+  </div>
+  <div class="files-section" id="filesSection" style="display:none;">
+    <div class="files-header">
+      <div class="files-header-left">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+          <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"
+            stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span data-i18n="files.title">Прикреплённые файлы</span>
+      </div>
+      <span class="files-count" id="filesCount">0 · 0 KB</span>
+    </div>
+
+    <div id="filesList"></div>
+
+    <div class="dropzone" id="dropzone">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+        <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"
+          stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div class="dropzone-title" data-i18n="files.dropzone_title">Добавить файлы</div>
+      <div class="dropzone-hint">Перетащите или <span class="dropzone-browse" id="btnBrowseFiles">выберите файлы</span></div>
+    </div>
+    <input type="file" id="fileInput" multiple style="display:none;">
+  </div>
+
+  <!-- Paste -->
+  <!-- Manual capture fallback — скрыт по умолчанию, появляется только после фейла шага 2 -->
+  <div style="padding:0 14px;">
+    <button class="scan-btn" id="btnScanNow" style="display:none;">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+        <circle cx="5" cy="5" r="3.5" stroke="#4ade80" stroke-width="1.5"/>
+        <path d="M8 8 L11 11" stroke="#4ade80" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      <span data-i18n="scan.btn">Захватить вручную — если JSON уже на странице</span>
+    </button>
+  </div>
+
+  <div class="section hidden" id="sectionPaste" style="display:none;">
+    <div class="section-header" data-section="sectionPaste">
+      <span class="arrow">▶</span>
+      <span class="section-label" data-i18n="paste.title">Вставка контекста</span>
+      <span class="badge-dot" style="background:#7c3aed;"></span>
+    </div>
+    <div class="section-body">
+      <div id="srcWarning" class="src-warning-box" style="display:none;"></div>
+      <div class="section-desc" data-i18n="paste.desc">Контекст захвачен. Выберите способ вставки:</div>
+      <button class="step-btn btn-paste" id="btnPaste" data-i18n="paste.btn_main">📋 Вставить контекст + файлы</button>
+      <button class="step-btn paste-sub-btn" id="btnPasteContextOnly" data-i18n="paste.btn_ctx">Только контекст</button>
+      <button class="step-btn paste-sub-btn copy-btn" id="btnCopyJSON" data-i18n="paste.btn_copy">📄 Копировать JSON</button>
+      <div style="font-size:11px;color:#6b7280;margin:6px 0 4px;" data-i18n="paste.new_chat">Открыть новый чат:</div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px;">
+        <a href="https://claude.ai/new" target="_blank" class="llm-link">Claude</a>
+        <a href="https://chatgpt.com/" target="_blank" class="llm-link">ChatGPT</a>
+        <a href="https://grok.com/" target="_blank" class="llm-link">Grok</a>
+        <a href="https://gemini.google.com/app" target="_blank" class="llm-link">Gemini</a>
+        <a href="https://chat.mistral.ai/chat" target="_blank" class="llm-link">Mistral</a>
+        <a href="https://www.perplexity.ai/" target="_blank" class="llm-link">Perplexity</a>
+        <a href="https://chat.deepseek.com/" target="_blank" class="llm-link">Deepseek</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Status -->
+  <div class="status-bar" id="statusBar">
+    <span class="status-dot" id="statusDot"></span>
+    <span id="statusText">Готов к работе</span>
+  </div>
+
+  <!-- Donate button -->
+  <button class="btn-donate" id="btnDonate">
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 11.5S1 8 1 4.5a2.75 2.75 0 015.5 0 2.75 2.75 0 015.5 0C12 8 6.5 11.5 6.5 11.5z" fill="#f59e0b"/></svg>
+    <span style="flex:1;text-align:left;" data-i18n="nav.donate">Поддержать SessionPort</span>
+    <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5h6M5.5 2l3 3-3 3" stroke="#f59e0b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </button>
+
+  <!-- Nav: History + Map -->
+  <div class="nav-row">
+    <button class="btn-nav" id="btnHistory">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="5" stroke="#60a5fa" stroke-width="1.3"/><path d="M6 3.5V7l2.5 1.5" stroke="#60a5fa" stroke-width="1.3" stroke-linecap="round"/></svg>
+      <span style="flex:1;text-align:left;" data-i18n="nav.history">История</span>
+      <span class="nav-badge" id="histCount">0</span>
+    </button>
+    <button class="btn-nav btn-nav-map" id="btnMap">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="2" fill="#c4b5fd"/><circle cx="2" cy="2" r="1.5" stroke="#c4b5fd" stroke-width="1"/><circle cx="10" cy="2" r="1.5" stroke="#c4b5fd" stroke-width="1"/><circle cx="2" cy="10" r="1.5" stroke="#c4b5fd" stroke-width="1"/><line x1="3.5" y1="3.5" x2="5" y2="5" stroke="#c4b5fd" stroke-width="1"/><line x1="8.5" y1="3.5" x2="7" y2="5" stroke="#c4b5fd" stroke-width="1"/><line x1="3.5" y1="8.5" x2="5" y2="7" stroke="#c4b5fd" stroke-width="1"/></svg>
+      Map
+    </button>
+  </div>
+
+  <!-- Nav: Trash -->
+  <div class="nav-row" style="margin-top:6px;">
+    <button class="btn-nav btn-nav-trash" id="btnTrash">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="3" y="4" width="6" height="7" rx="1" stroke="#f87171" stroke-width="1.2"/><path d="M2 4h8M4.5 4V2.5h3V4" stroke="#f87171" stroke-width="1.2" stroke-linecap="round"/></svg>
+      <span data-i18n="nav.trash">Корзина</span>
+      <span class="nav-badge" id="trashCount" style="background:#ef4444;display:none;"></span>
+    </button>
+  </div>
+
+  <!-- Storage usage -->
+  <div class="storage-bar" id="storageBar">
+    <span class="storage-label" data-i18n="storage.label">Буфер:</span>
+    <div class="storage-track"><div class="storage-fill" id="storageFill"></div></div>
+    <span class="storage-text" id="storageText">—</span>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer-links">
+    <button class="footer-btn" id="btnBug" data-i18n="nav.bug">🐛 Сообщить о баге</button>
+  </div>
+
+</div><!-- /screenMain -->
+
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- SCREEN: HISTORY                                -->
+<!-- ══════════════════════════════════════════════ -->
+<div id="screenHistory" class="screen">
+  <div class="back-hdr">
+    <button class="back-btn" id="btnHistBack">
+      <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M7 5H3M4.5 2l-3 3 3 3" stroke="#60a5fa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span data-i18n="hist.back">Назад</span>
+    </button>
+    <span class="back-title" data-i18n="hist.title">История переносов</span>
+    <span class="back-badge" id="histBadge">0 слепков</span>
+  </div>
+  <div class="hist-tabs">
+    <button class="hist-tab on" id="htabHistory" data-i18n="hist.tab_history">История</button>
+    <button class="hist-tab map-t" id="htabMap" data-i18n="hist.tab_map">Mind Map</button>
+  </div>
+  <div class="hist-filters" id="histTypeFilters">
+    <button class="hist-filter on" id="hfAll" data-i18n="hist.filter_all" data-i18n-title="hist.filter_all_title" title="Показать все переносы">Все</button>
+    <button class="hist-filter" id="hfLinked" data-i18n="hist.filter_linked" data-i18n-title="hist.filter_linked_title" title="Переносы связанные с другими проектами (cross-project chain)">Связи</button>
+  </div>
+  <div id="histSearchRow" style="display:flex;gap:4px;">
+    <input id="histSearch" class="hist-search" type="text" data-i18n-ph="hist.search_ph" placeholder="Поиск по сайту…" autocomplete="off">
+    <select id="histProjDropdown" class="hist-proj-select"><option value="" data-i18n="hist.all_projects">Все проекты</option></select>
+  </div>
+  <div id="diffArea" style="display:none;"></div>
+
+  <!-- Tab panel: История -->
+  <div id="histPanel">
+    <div class="hist-list" id="histList"><div class="hist-empty" data-i18n="hist.loading">Загрузка…</div></div>
+  </div>
+
+  <!-- Tab panel: Mind Map (inline, same screen) -->
+  <div id="histMapPanel" style="display:none;">
+    <div id="hmapProjSel" style="margin-bottom:8px;"></div>
+    <div class="map-canvas" id="hmapCanvasEl" style="height:340px;">
+      <svg id="hmapSvgEl" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:all;overflow:visible;"></svg>
+      <div id="hmapEmptyEl" class="map-empty-label" data-i18n="hist.no_snap_map">Нет снапшотов — сделайте захват в основном окне</div>
+      <div class="map-node-info" id="hmapNodeInfo">
+        <div class="map-node-info-row">
+          <span class="map-node-info-proj" id="hmapInfoProj"></span>
+          <span class="map-node-info-date" id="hmapInfoDate"></span>
+        </div>
+        <div class="map-node-info-meta" id="hmapInfoMeta"></div>
+        <button class="hist-paste-btn primary" id="hmapInfoLoad" style="width:100%;" data-i18n="hist.load_snap">Загрузить слепок</button>
+      </div>
+      <div style="position:absolute;bottom:6px;right:6px;display:flex;flex-direction:column;gap:2px;">
+        <button id="hmapZoomIn" class="map-zoom" style="font-size:14px;" data-i18n-aria="hist.zoom_in_aria" aria-label="Увеличить">+</button>
+        <button id="hmapZoomOut" class="map-zoom" style="font-size:14px;" data-i18n-aria="hist.zoom_out_aria" aria-label="Уменьшить">−</button>
+        <button id="hmapZoomReset" class="map-zoom" style="font-size:9px;" data-i18n-aria="hist.zoom_rst_aria" aria-label="Сбросить масштаб">⊙</button>
+      </div>
+    </div>
+    <div class="map-toolbar" style="margin-top:6px;">
+      <button class="map-tool-btn" id="hmapBtnBranch" data-i18n="hist.branch">+ Ветка</button>
+      <button class="map-tool-btn" id="hmapBtnDashboard" data-i18n="hist.dashboard">⛶ Дашборд</button>
+    </div>
+  </div>
+  <div style="display:flex;gap:6px;">
+    <button class="hist-export" id="btnHistExport" style="flex:1;" data-i18n="hist.export">⬇ Экспорт</button>
+    <button class="hist-export" id="btnHistImport" style="flex:1;" data-i18n="hist.import">⬆ Импорт</button>
+    <input type="file" id="importFileInput" accept=".json" style="display:none;">
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- SCREEN: MAP                                    -->
+<!-- ══════════════════════════════════════════════ -->
+<div id="screenMap" class="screen">
+  <div class="back-hdr">
+    <button class="back-btn" id="btnMapBack">
+      <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M7 5H3M4.5 2l-3 3 3 3" stroke="#60a5fa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span data-i18n="map.back">Назад</span>
+    </button>
+    <span class="back-title" style="flex:1;">Mind Map</span>
+    <div id="mapThemeToggle" style="width:28px;height:15px;background:#334155;border-radius:8px;cursor:pointer;position:relative;flex-shrink:0;">
+      <div id="mapThemeThumb" style="position:absolute;top:2px;left:2px;width:11px;height:11px;border-radius:50%;background:#94a3b8;transition:left 0.15s;"></div>
+    </div>
+  </div>
+  <div id="mapProjSel" style="display:flex;gap:4px;flex-wrap:wrap;"></div>
+  <div class="map-canvas" id="mapCanvasEl">
+    <svg id="mapSvgEl" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:all;overflow:visible;"></svg>
+    <div id="mapEmptyEl" class="map-empty-label" data-i18n="map.empty">Нет снапшотов — сделайте захват в основном окне</div>
+    <div class="map-node-info" id="mapNodeInfo">
+      <div class="map-node-info-row">
+        <span class="map-node-info-proj" id="mapInfoProj"></span>
+        <span class="map-node-info-date" id="mapInfoDate"></span>
+      </div>
+      <div class="map-node-info-meta" id="mapInfoMeta"></div>
+      <button class="hist-paste-btn primary" id="mapInfoLoad" style="width:100%;" data-i18n="map.load_snap">Загрузить слепок</button>
+    </div>
+    <div style="position:absolute;bottom:6px;right:6px;display:flex;flex-direction:column;gap:2px;">
+      <button id="mapZoomIn" class="map-zoom" style="font-size:14px;" data-i18n-aria="hist.zoom_in_aria" aria-label="Увеличить">+</button>
+      <button id="mapZoomOut" class="map-zoom" style="font-size:14px;" data-i18n-aria="hist.zoom_out_aria" aria-label="Уменьшить">−</button>
+      <button id="mapZoomReset" class="map-zoom" style="font-size:9px;" data-i18n-aria="hist.zoom_rst_aria" aria-label="Сбросить масштаб">⊙</button>
+    </div>
+  </div>
+  <div class="map-toolbar">
+    <button class="map-tool-btn" id="mapBtnBranch" data-i18n="map.branch">+ Ветка</button>
+    <button class="map-tool-btn" id="mapBtnLink" data-i18n="map.link">🔗 Связать</button>
+    <button class="map-tool-btn" id="mapBtnNew" data-i18n="map.new_proj">+ Проект</button>
+    <button class="map-tool-btn" id="mapBtnDashboard" data-i18n="map.dashboard">⛶ Дашборд</button>
+  </div>
+  <div id="mapLinkHint"></div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- SCREEN: DONATE                                 -->
+<!-- ══════════════════════════════════════════════ -->
+<div id="screenDonate" class="screen">
+  <div class="back-hdr">
+    <button class="back-btn" id="btnDonateBack">
+      <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M7 5H3M4.5 2l-3 3 3 3" stroke="#60a5fa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span data-i18n="donate.back">Назад</span>
+    </button>
+    <span class="back-title" data-i18n="donate.title">Поддержать проект</span>
+  </div>
+  <div class="donate-content">
+    <div class="donate-section collapsed">
+      <div class="donate-s-title donate-acc-hdr" data-i18n="donate.s1_title"></div>
+      <div class="donate-acc-body">
+        <div class="donate-s-body" data-i18n-html="donate.s1_body"></div>
+      </div>
+    </div>
+    <div class="donate-section collapsed">
+      <div class="donate-s-title donate-acc-hdr" data-i18n="donate.s2_title"></div>
+      <div class="donate-acc-body">
+        <div class="donate-s-body" data-i18n-html="donate.s2_body"></div>
+      </div>
+    </div>
+    <div class="donate-section">
+      <div class="donate-s-title donate-acc-hdr" data-i18n="donate.s3_title"></div>
+      <div class="donate-acc-body">
+        <div class="donate-s-body" data-i18n-html="donate.s3_body"></div>
+        <div class="donate-crypto">
+          <div class="donate-s-title donate-crypto-title" data-i18n="donate.crypto_title">Crypto</div>
+        <div class="crypto-row">
+          <div class="crypto-meta">USDT<span class="crypto-net">TRC20</span></div>
+          <div class="crypto-addr-row">
+            <span class="crypto-addr">TLGbUSbJuGGzLkcfftf6YFkw7pmjKTa67a</span>
+            <button class="crypto-copy" data-addr="TLGbUSbJuGGzLkcfftf6YFkw7pmjKTa67a" title="Copy"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="4" y="4" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.3"/><path d="M1 8V1h7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></button>
+          </div>
+        </div>
+        <div class="crypto-row">
+          <div class="crypto-meta">SOL<span class="crypto-net">Solana</span></div>
+          <div class="crypto-addr-row">
+            <span class="crypto-addr">GBYqkpNkZWC1cn1URLHvDhF7tksQjTwyw9Ke1VfnJMaa</span>
+            <button class="crypto-copy" data-addr="GBYqkpNkZWC1cn1URLHvDhF7tksQjTwyw9Ke1VfnJMaa" title="Copy"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="4" y="4" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.3"/><path d="M1 8V1h7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></button>
+          </div>
+        </div>
+        <div class="crypto-row">
+          <div class="crypto-meta">ETH<span class="crypto-net">Ethereum</span></div>
+          <div class="crypto-addr-row">
+            <span class="crypto-addr">0x799f4c8364EfFa2FA7cb57876d38F1776A11c86E</span>
+            <button class="crypto-copy" data-addr="0x799f4c8364EfFa2FA7cb57876d38F1776A11c86E" title="Copy"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="4" y="4" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.3"/><path d="M1 8V1h7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></button>
+          </div>
+        </div>
+        <div class="crypto-row">
+          <div class="crypto-meta">BTC<span class="crypto-net">Bitcoin</span></div>
+          <div class="crypto-addr-row">
+            <span class="crypto-addr">bc1q3easlft0ct8qxxc55gacg90zawkd0p5nvz85pj</span>
+            <button class="crypto-copy" data-addr="bc1q3easlft0ct8qxxc55gacg90zawkd0p5nvz85pj" title="Copy"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="4" y="4" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.3"/><path d="M1 8V1h7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></button>
+          </div>
+        </div>
+        <div class="crypto-row">
+          <div class="crypto-meta">BNB<span class="crypto-net">BNB Smart Chain</span></div>
+          <div class="crypto-addr-row">
+            <span class="crypto-addr">0x799f4c8364EfFa2FA7cb57876d38F1776A11c86E</span>
+            <button class="crypto-copy" data-addr="0x799f4c8364EfFa2FA7cb57876d38F1776A11c86E" title="Copy"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="4" y="4" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.3"/><path d="M1 8V1h7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></button>
+          </div>
+        </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- SCREEN: BUG                                    -->
+<!-- ══════════════════════════════════════════════ -->
+<div id="screenBug" class="screen">
+  <div class="back-hdr">
+    <button class="back-btn" id="btnBugBack">
+      <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M7 5H3M4.5 2l-3 3 3 3" stroke="#60a5fa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span data-i18n="bug.back">Назад</span>
+    </button>
+    <span class="back-title" data-i18n="bug.title">Сообщить о баге</span>
+  </div>
+  <div style="font-size:10px;color:#6b7280;margin-bottom:4px;" data-i18n="bug.desc">Нашли проблему? Выберите удобный канал:</div>
+  <a href="https://t.me/SessionPort" target="_blank" class="bug-link">
+    <div class="bug-icon" style="background:#1a2a3a;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M13.5 2.5L2 6.5l4 1.5 1.5 4.5 2-3 3.5 2.5 1-9z" fill="#60a5fa"/></svg></div>
+    <div><div class="bug-name">Telegram</div><div class="bug-url">t.me/SessionPort</div></div>
+  </a>
+  <a href="https://twitter.com/SessionPort" target="_blank" class="bug-link">
+    <div class="bug-icon" style="background:#1a1a1a;"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M13 1.5L8.5 6.5 13 12.5H10L7 8.5 4 12.5H1L5.5 7 1 1.5H4l3 4 3-4H13z" fill="#c9d1d9"/></svg></div>
+    <div><div class="bug-name">X / Twitter</div><div class="bug-url">@SessionPort</div></div>
+  </a>
+  <a href="mailto:sessionport@gmail.com" class="bug-link">
+    <div class="bug-icon" style="background:#1a2a1a;"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="3" width="12" height="8" rx="1.5" stroke="#4ade80" stroke-width="1.2"/><path d="M1 4l6 4.5L13 4" stroke="#4ade80" stroke-width="1.2" stroke-linecap="round"/></svg></div>
+    <div><div class="bug-name">Email</div><div class="bug-url">sessionport@gmail.com</div></div>
+  </a>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- SCREEN: TRASH                                  -->
+<!-- ══════════════════════════════════════════════ -->
+<div id="screenTrash" class="screen">
+  <div class="back-hdr">
+    <button class="back-btn" id="btnTrashBack">
+      <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M7 5H3M4.5 2l-3 3 3 3" stroke="#60a5fa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span data-i18n="trash.back">Назад</span></button>
+    <span class="back-title" data-i18n="trash.title">Корзина</span>
+    <span class="back-badge" id="trashBadge">0 снапшотов</span>
+  </div>
+  <div id="trashEmpty" class="trash-empty-state">
+    <div style="font-size:24px;margin-bottom:8px;">🗑️</div>
+    <div data-i18n="trash.empty">Корзина пуста</div>
+  </div>
+  <div id="trashList"></div>
+  <div class="trash-footer">
+    <button class="btn-empty-trash" id="btnEmptyTrash" disabled data-i18n="trash.clear">Очистить корзину</button>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- SCREEN: SETTINGS                               -->
+<!-- ══════════════════════════════════════════════ -->
+<div id="screenSettings" class="screen">
+  <div class="back-hdr">
+    <button class="back-btn" id="btnSettingsBack">
+      <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M7 5H3M4.5 2l-3 3 3 3" stroke="#60a5fa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span data-i18n="sett.back">Назад</span></button>
+    <span class="back-title" data-i18n="sett.title">Аккаунт и настройки</span>
+  </div>
+
+  <!-- Tab switcher -->
+  <div style="display:flex;gap:6px;">
+    <button class="trans-tab active-account" id="settTabAccount">
+      <svg width="11" height="11" viewBox="0 0 11 11" fill="none" style="vertical-align:-1px"><circle cx="5.5" cy="3.5" r="2.5" fill="currentColor"/><path d="M0.5 10.5c0-2.76 2.24-5 5-5s5 2.24 5 5" fill="currentColor"/></svg>
+      <span data-i18n="sett.tab_account">Аккаунт</span>
+    </button>
+    <button class="trans-tab" id="settTabPrefs">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style="vertical-align:-1px"><circle cx="6" cy="6" r="2" stroke="currentColor" stroke-width="1.3"/><path d="M6 1v1.2M6 9.8V11M1 6h1.2M9.8 6H11M2.7 2.7l.85.85M8.45 8.45l.85.85M9.3 2.7l-.85.85M3.55 8.45l-.85.85" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      <span data-i18n="sett.tab_prefs">Настройки</span>
+    </button>
+  </div>
+
+  <!-- Panel: Account -->
+  <div id="settPanelAccount">
+
+    <!-- Not connected -->
+    <div id="gdNotConnected">
+      <p class="gd-intro">Войдите через Google для автобэкапа снапшотов на Drive и синхронизации между браузерами.</p>
+      <button id="btnGdSignIn" class="gd-signin-btn">
+        <svg width="15" height="15" viewBox="0 0 14 14" fill="none"><path d="M13 7.15c0-.5-.04-1-.12-1.5H7v2.84h3.36c-.15.8-.6 1.47-1.26 1.92v1.6h2.04C12.45 10.9 13 9.16 13 7.15z" fill="#4285f4"/><path d="M7 13c1.68 0 3.09-.55 4.12-1.5L9.08 9.9c-.56.38-1.28.6-2.08.6-1.6 0-2.96-1.08-3.44-2.53H1.48v1.64C2.5 11.44 4.62 13 7 13z" fill="#34a853"/><path d="M3.56 7.97c-.12-.36-.19-.74-.19-1.13 0-.4.07-.78.19-1.14V4.06H1.48A6.04 6.04 0 0 0 1 6.84c0 .97.23 1.88.48 2.77l2.08-1.64z" fill="#fbbc05"/><path d="M7 3.43c.9 0 1.7.31 2.33.92l1.75-1.75C9.93 1.56 8.6 1 7 1A6 6 0 0 0 1.48 4.06l2.08 1.64C4.04 4.51 5.4 3.43 7 3.43z" fill="#ea4335"/></svg>
+        Войти через Google
+      </button>
+      <div id="gdSetupNotice" class="gd-setup-notice" style="display:none">
+        ⚠ Для входа нужен OAuth Client ID. Инструкция: Google Cloud Console → APIs &amp; Services → Credentials → Create OAuth Client ID (Chrome Extension) → вставить в manifest.json поле oauth2.client_id.
+      </div>
+    </div>
+
+    <!-- Connected -->
+    <div id="gdConnected" style="display:none">
+      <div class="gd-profile">
+        <div class="gd-avatar" id="gdAvatarEl">G</div>
+        <div class="gd-info">
+          <div class="gd-email" id="gdEmailEl">—</div>
+          <div class="gd-uid"  id="gdUidEl"></div>
+        </div>
+        <button id="btnGdSignOut" class="gd-signout-btn">Выйти</button>
+      </div>
+
+      <div class="gd-section-title">Google Drive бэкап</div>
+
+      <div class="gd-row">
+        <span class="gd-row-label">Автобэкап</span>
+        <div class="gd-int-drop">
+          <button id="gdIntervalBtn" class="lang-drop-btn gd-int-btn">
+            <span id="gdIntervalLabel">Выкл</span>
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div id="gdIntervalMenu" class="lang-drop-menu" style="display:none;">
+            <button class="lang-drop-item gd-int-item" data-val="off">Выкл</button>
+            <button class="lang-drop-item gd-int-item" data-val="6h">Каждые 6 ч</button>
+            <button class="lang-drop-item gd-int-item" data-val="24h">Каждые 24 ч</button>
+            <button class="lang-drop-item gd-int-item" data-val="7d">Каждые 7 дней</button>
+          </div>
+        </div>
+      </div>
+
+      <button id="btnGdBackupNow" class="gd-btn gd-btn-backup">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v7M3 5l3 3 3-3M1 10h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Создать бэкап сейчас
+      </button>
+      <button id="btnGdRestore" class="gd-btn gd-btn-restore">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 11V4M3 7l3-3 3 3M1 1h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Восстановить с Drive
+      </button>
+
+      <div class="gd-last-backup" id="gdLastBackupEl">Нет бэкапов</div>
+    </div>
+
+    <!-- Sync stub — v1.1 -->
+    <div class="gd-sync-stub">
+      <div class="gd-sync-stub-row">
+        <span class="gd-sync-stub-label">Синхронизация между устройствами</span>
+        <span class="badge-roadmap">v1.1</span>
+      </div>
+      <div class="gd-intro" style="margin-bottom:0">Автосинхронизация снапшотов через Google Account. Войдите — функция станет доступна после обновления.</div>
+    </div>
+  </div>
+
+  <!-- Restore modal -->
+  <div id="gdRestoreModal" class="gd-modal-overlay">
+    <div class="gd-modal">
+      <div class="gd-modal-title">Выбрать бэкап</div>
+      <div class="gd-backup-list" id="gdBackupList"></div>
+      <button id="btnGdModalCancel" class="gd-modal-cancel">Отмена</button>
+    </div>
+  </div>
+
+  <!-- Panel: Preferences -->
+  <div id="settPanelPrefs" style="display:none;">
+    <div class="sett-row">
+      <div>
+        <div class="sett-row-label" data-i18n="sett.theme_label">Светлая тема</div>
+        <div class="sett-row-sub" data-i18n="sett.theme_sub">Переключить цветовую схему</div>
+      </div>
+      <button id="settThemeToggle" class="sett-toggle">
+        <div id="settThemeThumb" class="sett-thumb"></div>
+      </button>
+    </div>
+    <div class="sett-row">
+      <div>
+        <div class="sett-row-label" data-i18n="sett.lang_label">Язык</div>
+        <div class="sett-row-sub" data-i18n="sett.lang_sub">Язык интерфейса</div>
+      </div>
+      <select id="settLangSelect" style="display:none;">
+        <option value="en">English</option>
+        <option value="ru">Русский</option>
+        <option value="de">Deutsch</option>
+        <option value="fr">Français</option>
+        <option value="es">Español</option>
+        <option value="pt">Português</option>
+        <option value="ja">日本語</option>
+        <option value="ko">한국어</option>
+        <option value="zh">中文</option>
+      </select>
+      <div id="langDropdown" class="lang-dropdown">
+        <button id="langDropBtn" class="lang-drop-btn" type="button">
+          <span id="langDropLabel">Русский</span>
+          <svg width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div id="langDropMenu" class="lang-drop-menu" style="display:none;">
+          <button class="lang-drop-item" data-lang="en" data-i18n="sett.lang_en">English</button>
+          <button class="lang-drop-item" data-lang="ru" data-i18n="sett.lang_ru">Русский</button>
+          <button class="lang-drop-item" data-lang="de" data-i18n="sett.lang_de">Deutsch</button>
+          <button class="lang-drop-item" data-lang="fr" data-i18n="sett.lang_fr">Français</button>
+          <button class="lang-drop-item" data-lang="es" data-i18n="sett.lang_es">Español</button>
+          <button class="lang-drop-item" data-lang="pt" data-i18n="sett.lang_pt">Português</button>
+          <button class="lang-drop-item" data-lang="ja" data-i18n="sett.lang_ja">日本語</button>
+          <button class="lang-drop-item" data-lang="ko" data-i18n="sett.lang_ko">한국어</button>
+          <button class="lang-drop-item" data-lang="zh" data-i18n="sett.lang_zh">中文</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="sett-row">
+      <div>
+        <div class="sett-row-label" data-i18n="sett.hide_test_label">Скрыть кнопку теста</div>
+        <div class="sett-row-sub" data-i18n="sett.hide_test_sub">Убрать «Тест автовставки» с главного экрана</div>
+      </div>
+      <button id="settHideTestToggle" class="sett-toggle">
+        <div id="settHideTestThumb" class="sett-thumb"></div>
+      </button>
+    </div>
+    <hr class="sett-section-divider">
+    <div class="sett-row">
+      <div>
+        <div class="sett-row-label" data-i18n="sett.export_label">Экспорт данных</div>
+        <div class="sett-row-sub"   data-i18n="sett.export_sub">Скачать все снапшоты как JSON-файл</div>
+      </div>
+      <button id="settExportBtn" class="sett-action-btn" data-i18n="sett.export_btn">Скачать</button>
+    </div>
+    <div class="sett-row">
+      <div>
+        <div class="sett-row-label" data-i18n="sett.import_label">Импорт данных</div>
+        <div class="sett-row-sub"   data-i18n="sett.import_sub">Восстановить снапшоты из файла резервной копии</div>
+      </div>
+      <button id="settImportBtn" class="sett-action-btn" data-i18n="sett.import_btn">Загрузить</button>
+      <input type="file" id="settImportFile" accept=".json" style="display:none;">
+    </div>
+  </div>
+</div>
+
+
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- SCREEN: PROMPTS LIBRARY                        -->
+<!-- ══════════════════════════════════════════════ -->
+<div id="screenPrompts" class="screen">
+  <div class="back-hdr">
+    <button class="back-btn" id="btnPromptsBack">
+      <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+        <path d="M1.5 3.5H9" stroke="#60a5fa" stroke-width="1.2" stroke-linecap="round"/>
+        <path d="M7 1.5L9.5 3.5L7 5.5" stroke="#60a5fa" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M9.5 7.5H2" stroke="#60a5fa" stroke-width="1.2" stroke-linecap="round"/>
+        <path d="M4 5.5L1.5 7.5L4 9.5" stroke="#60a5fa" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span data-i18n="nav.capture">Перенос</span>
+    </button>
+    <span class="back-title" data-i18n="prompts.title">Промпт-библиотека</span>
+    <span class="back-badge" id="promptsBadge">0</span>
+    <button class="pr-sync-hdr-btn" id="btnPromptSync" data-i18n-title="prompts.sync" title="Синхр.">
+      <svg width="12" height="12" viewBox="0 0 11 11" fill="none"><path d="M1 5.5a4.5 4.5 0 0 1 8.7-1.5M10 5.5a4.5 4.5 0 0 1-8.7 1.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M9.5 1v3h-3M1.5 10V7h3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+  </div>
+  <div class="pr-toolbar">
+    <button class="pr-toolbar-btn pr-btn-create" id="btnPromptCreate">
+      <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M5 1v8M1 5h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <span data-i18n="prompts.create">+ Создать</span>
+    </button>
+  </div>
+  <input id="promptsSearch" class="pr-search" type="text" data-i18n-ph="prompts.search_ph" placeholder="Поиск по названию или тегу…" autocomplete="off">
+  <div class="pr-list" id="promptsList"></div>
+  <div class="pr-empty-state" id="promptsEmpty" style="display:none;">
+    <div class="pr-empty-state-title" data-i18n="prompts.empty_title">Библиотека пуста</div>
+    <div class="pr-empty-state-sub" data-i18n="prompts.empty_sub">Создайте первый промпт для быстрой вставки в любую LLM</div>
+    <button class="pr-empty-state-btn" id="btnPromptCreateEmpty" data-i18n="prompts.empty_btn">+ Создать промпт</button>
+  </div>
+  <button class="pr-toolbar-btn pr-btn-trash-nav" id="btnPromptTrash" style="width:100%;justify-content:center;margin-top:4px;">
+    <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><rect x="2.5" y="3.5" width="5" height="5.5" rx=".8" stroke="currentColor" stroke-width="1"/><path d="M1.5 3.5h7M3.5 3.5v-1.5h3v1.5" stroke="currentColor" stroke-width="1" stroke-linecap="round"/></svg>
+    <span data-i18n="prompts.trash_nav">Корзина промптов</span>
+  </button>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- SCREEN: PROMPT EDITOR                          -->
+<!-- ══════════════════════════════════════════════ -->
+<div id="screenPromptEdit" class="screen">
+  <div class="back-hdr">
+    <button class="back-btn" id="btnPeBack">
+      <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M7 5H3M4.5 2l-3 3 3 3" stroke="#60a5fa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span data-i18n="prompts.back">Назад</span>
+    </button>
+    <span class="back-title" id="peScreenTitle" data-i18n="prompts.edit_title_new">Новый промпт</span>
+  </div>
+  <div class="pe-form">
+    <input class="pe-input" id="peTitle" type="text" data-i18n-ph="prompts.field_title_ph" placeholder="Название промпта *" maxlength="120" required>
+    <textarea class="pe-textarea" id="peText" data-i18n-ph="prompts.field_text_ph" placeholder="Текст промпта…&#10;&#10;Поддерживаются переменные: {{имя}}, {{дата}}"></textarea>
+    <div class="pe-char-count" id="peCharCount">0 симв.</div>
+    <div class="pe-var-hint" id="peVarHint" data-i18n="prompts.var_hint">Переменные {{…}} будут запрошены перед вставкой</div>
+    <div class="pe-field-label" data-i18n="prompts.field_tags_label">Теги</div>
+    <div class="pe-tags-pool" id="peTagsPool"></div>
+    <div class="pe-tag-input-wrap" id="peTagNewRow">
+      <input class="pe-tag-input-inline" id="peTagInput" type="text" placeholder="+ новый тег" maxlength="30" autocomplete="off">
+      <button class="pe-tag-confirm-btn" id="btnPeConfirmTag" data-i18n-title="prompts.add_tag" title="Добавить тег">✓</button>
+    </div>
+    <div class="pe-drop-zone" id="peDropZone">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2v9M5 8l3 3 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 13h12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+      <span data-i18n="prompts.drop_file">Перетащите файл или нажмите для выбора</span>
+    </div>
+    <button id="btnPeAttachFile" style="display:none;"></button>
+    <input type="file" id="peFileInput" style="display:none;">
+    <div id="peFileInfo"></div>
+    <div style="display:flex;justify-content:flex-end;">
+      <button class="pe-fav-btn" id="btnPeFavorite" data-i18n="prompts.add_favorite">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1l1.5 3.1L11 4.5 8.5 7l.6 3.5L6 8.8 2.9 10.5l.6-3.5L1 4.5l3.5-.4L6 1z" stroke="currentColor" stroke-width="1" fill="none"/></svg>
+        В избранное
+      </button>
+    </div>
+    <div class="pe-preview-section" id="pePreviewSection">
+      <button class="pe-preview-hdr" id="pePreviewToggle">
+        <span id="pePreviewArrow" class="pe-preview-arrow">▾</span>
+        <span class="pe-preview-label" data-i18n="prompts.preview_label">Превью</span>
+      </button>
+      <div class="pe-preview-body">
+        <div class="pe-preview-box" id="pePreview"></div>
+      </div>
+    </div>
+    <div class="pe-bottom-actions">
+      <button class="pe-btn-save" id="btnPeSave">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span data-i18n="prompts.save">Сохранить</span>
+      </button>
+      <button class="pe-btn-delete" id="btnPeDelete" style="display:none;">
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><rect x="2.5" y="3.5" width="5" height="5.5" rx=".8" stroke="currentColor" stroke-width="1"/><path d="M1.5 3.5h7M3.5 3.5v-1.5h3v1.5" stroke="currentColor" stroke-width="1" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- SCREEN: PROMPT TRASH                           -->
+<!-- ══════════════════════════════════════════════ -->
+<div id="screenPromptTrash" class="screen">
+  <div class="back-hdr">
+    <button class="back-btn" id="btnPtBack">
+      <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M7 5H3M4.5 2l-3 3 3 3" stroke="#f87171" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span data-i18n="prompts.back">Назад</span>
+    </button>
+    <span class="back-title" data-i18n="prompts.trash_title">Корзина промптов</span>
+  </div>
+  <div id="promptTrashList"></div>
+  <div class="pr-trash-empty" id="promptTrashEmpty" style="display:none;" data-i18n="prompts.trash_empty">Корзина пуста</div>
+</div>
+
+
+<script src="i18n.js"></script>
+<script src="db.js"></script>
+<script src="shared-utils.js"></script>
+<script src="map-renderer.js"></script>
+<script src="popup-utils.js"></script>
+<script src="projects.js"></script>
+<script src="history.js"></script>
+<script src="files.js"></script>
+<script src="flow.js"></script>
+<script src="trash.js"></script>
+<script src="google-drive.js"></script>
+<script src="settings.js"></script>
+<script src="prompts.js"></script>
+<script src="popup-shell.js"></script>
+
+</body>
+</html>

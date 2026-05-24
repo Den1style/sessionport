@@ -1,0 +1,498 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { height: 100%; overflow: hidden; }
+
+  body {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: #0f1117;
+    color: #e2e4e9;
+    transition: background 0.2s, color 0.2s;
+  }
+
+  body.light {
+    background: #f8f9fa;
+    color: #111318;
+  }
+
+  /* ── Header ── */
+  .header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+    padding: 14px 20px;
+    border-bottom: 1px solid #1e2028;
+  }
+  body.light .header { border-bottom-color: #e5e7eb; }
+
+  .header-logo {
+    width: 28px; height: 28px;
+    border-radius: 7px;
+    flex-shrink: 0;
+    object-fit: contain;
+    cursor: pointer;
+  }
+
+  .header-title {
+    font-size: 16px; font-weight: 600;
+    flex: 1;
+  }
+
+  .header-count {
+    font-size: 11px; color: #6b7280;
+    background: #161822;
+    border: 1px solid #1e2028;
+    border-radius: 5px;
+    padding: 3px 8px;
+  }
+  body.light .header-count { background: #f3f4f6; border-color: #e5e7eb; }
+
+  .btn-back {
+    display: flex; align-items: center; gap: 5px;
+    padding: 5px 10px;
+    background: #161822;
+    border: 1px solid #1e2028;
+    border-radius: 6px;
+    color: #60a5fa;
+    font-size: 12px;
+    cursor: pointer;
+    font-family: inherit;
+    text-decoration: none;
+  }
+  body.light .btn-back { background: #fff; border-color: #e5e7eb; }
+
+  .theme-toggle {
+    width: 32px; height: 17px;
+    background: #334155;
+    border-radius: 9px;
+    cursor: pointer;
+    position: relative;
+    flex-shrink: 0;
+    border: none;
+  }
+  .theme-thumb {
+    position: absolute;
+    top: 2.5px; left: 2.5px;
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: #94a3b8;
+    transition: left 0.15s;
+  }
+  body.light .theme-toggle { background: #aaff00; }
+  body.light .theme-thumb { left: 17.5px; background: #fff; }
+
+  /* ── Filters ── */
+  .filters {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+
+  .filter-btn {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    cursor: pointer;
+    border: 1px solid #1e2028;
+    background: #161822;
+    color: #6b7280;
+    font-family: inherit;
+    transition: all 0.1s;
+  }
+  .filter-btn.active {
+    background: #1a3a2a;
+    border-color: #22c55e44;
+    color: #4ade80;
+  }
+  body.light .filter-btn { background: #f3f4f6; border-color: #e5e7eb; color: #6b7280; }
+  body.light .filter-btn.active { background: #dcfce7; border-color: #86efac; color: #166534; }
+
+  /* ── Grid ── */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  /* ── Card ── */
+  .snap-card {
+    background: #161822;
+    border: 1px solid #1e2028;
+    border-radius: 10px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .snap-card.is-head { border-color: #22c55e44; }
+  body.light .snap-card { background: #fff; border-color: #e5e7eb; }
+  body.light .snap-card.is-head { border-color: #86efac; }
+  body.light #mapCanvas { background: #eef0f3 !important; border-color: #e5e7eb; }
+  body.light #mapPanel { background: transparent; }
+
+  #snapList {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+    padding: 16px 20px 20px;
+  }
+  #mapPanel {
+    flex: 1;
+    overflow: hidden;
+    min-height: 0;
+    padding: 12px 20px 16px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .card-top {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .badge-head {
+    background: #1a3a2a;
+    color: #4ade80;
+    font-size: 9px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-weight: 600;
+  }
+  body.light .badge-head { background: #dcfce7; color: #166534; }
+
+  .card-date {
+    color: #6b7280;
+    font-size: 10px;
+    margin-left: auto;
+  }
+
+  .card-project {
+    font-size: 12px;
+    color: #c9d1d9;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: 500;
+  }
+  body.light .card-project { color: #111318; }
+
+  .card-meta {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 10px;
+    color: #6b7280;
+  }
+  .card-meta .sep { color: #2a3a50; }
+
+  .card-actions {
+    display: flex;
+    gap: 4px;
+    margin-top: 2px;
+  }
+
+  .btn-load {
+    flex: 1;
+    padding: 5px;
+    background: #7c3aed22;
+    border: 1px solid #7c3aed44;
+    border-radius: 5px;
+    color: #a78bfa;
+    font-size: 10px;
+    text-align: center;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .btn-load:hover { background: #7c3aed33; }
+
+  .btn-sm {
+    padding: 5px 9px;
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 5px;
+    color: #64748b;
+    font-size: 10px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .btn-sm:hover { background: #263548; color: #94a3b8; }
+  body.light .btn-sm { background: #f3f4f6; border-color: #d1d5db; color: #6b7280; }
+  body.light .btn-load { background: #ede9fe; border-color: #c4b5fd; color: #6d28d9; }
+
+  /* ── Empty ── */
+  .empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: #4b5563;
+    font-size: 13px;
+  }
+
+  /* ── Footer ── */
+  .footer {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .btn-export {
+    flex: 1;
+    padding: 8px;
+    background: #161822;
+    border: 1px solid #1e2028;
+    border-radius: 7px;
+    color: #6b7280;
+    font-size: 11px;
+    text-align: center;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .btn-export:hover { color: #9ca3af; background: #1c1f2e; }
+  body.light .btn-export { background: #f3f4f6; border-color: #e5e7eb; }
+
+  /* ── Diff panel ── */
+  .diff-panel {
+    display: none;
+    background: #161822;
+    border: 1px solid #1e2028;
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 16px;
+  }
+  .diff-panel.open { display: block; }
+  body.light .diff-panel { background: #fff; border-color: #e5e7eb; }
+
+  .diff-header {
+    font-size: 12px;
+    font-weight: 500;
+    color: #9ca3af;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  body.light .diff-header { color: #6b7280; }
+
+  .diff-close {
+    background: none;
+    border: none;
+    color: #6b7280;
+    cursor: pointer;
+    font-size: 14px;
+    font-family: inherit;
+  }
+
+  .diff-row {
+    display: flex;
+    gap: 6px;
+    align-items: flex-start;
+    font-size: 11px;
+    padding: 3px 0;
+    border-bottom: 1px solid #1e2028;
+  }
+  .diff-row:last-child { border-bottom: none; }
+  body.light .diff-row { border-bottom-color: #f3f4f6; }
+
+  .diff-sign {
+    font-weight: 600;
+    width: 12px;
+    flex-shrink: 0;
+  }
+  .diff-sign.add { color: #4ade80; }
+  .diff-sign.rem { color: #f87171; }
+  .diff-sign.chg { color: #fbbf24; }
+
+  .diff-text { color: #c9d1d9; line-height: 1.5; }
+  body.light .diff-text { color: #374151; }
+
+  .diff-empty { color: #4b5563; font-size: 11px; text-align: center; padding: 10px 0; }
+
+  .loading { color: #6b7280; font-size: 11px; text-align: center; padding: 20px 0; }
+
+  /* ── Dashboard tabs ── */
+  .dash-tab {
+    padding: 4px 10px; border-radius: 5px; font-size: 11px;
+    cursor: pointer; font-family: inherit;
+    background: #161822; border: 1px solid #1e2028; color: #6b7280;
+    transition: all 0.15s;
+  }
+  .dash-tab.active-hist { background: #1a3a2a; border-color: #22c55e44; color: #4ade80; }
+  .dash-tab.active-map  { background: #1a1535; border-color: #7c3aed44; color: #c4b5fd; }
+  body.light .dash-tab { background: #f3f4f6; border-color: #e5e7eb; color: #6b7280; }
+  body.light .dash-tab.active-hist { background: #dcfce7; border-color: #86efac; color: #166534; }
+  body.light .dash-tab.active-map  { background: #f5f3ff; border-color: #c4b5fd; color: #6d28d9; }
+
+  /* ── Map canvas ── */
+  .map-canvas {
+    background: #080c12; border: 1px solid #1e2028; border-radius: 10px;
+    position: relative; width: 100%; flex: 1; min-height: 0; overflow: hidden; cursor: grab;
+  }
+  body.light .map-canvas { background: #eef0f3; border-color: #e5e7eb; }
+
+  /* ── Map node info panel ── */
+  .map-node-info { display:none; border:1px solid #2a3a50; border-radius:8px; padding:10px 12px; }
+  .map-node-info.visible { display:block; }
+  .map-node-info-row { display:flex; align-items:center; gap:6px; margin-bottom:3px; }
+  .map-node-info-proj { font-size:12px; font-weight:600; color:#c9d1d9; flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .map-node-info-date { font-size:10px; color:#6b7280; flex-shrink:0; }
+  .map-node-info-meta { font-size:10px; color:#6b7280; margin-bottom:6px; }
+  .map-canvas .map-node-info { position:absolute; bottom:10px; left:10px; width:260px; z-index:10; margin:0; background:rgba(18,20,30,0.94); backdrop-filter:blur(8px); }
+  body.light .map-canvas .map-node-info { background:rgba(255,255,255,0.95); border-color:#e5e7eb; }
+  body.light .map-node-info-proj { color:#111318; }
+  .map-info-load-btn { width:100%; padding:6px; background:#7c3aed; border:none; border-radius:6px; color:#fff; font-size:11px; cursor:pointer; font-family:inherit; }
+  .map-info-load-btn:hover { background:#6d28d9; }
+
+  /* ── Map zoom buttons ── */
+  .map-zoom-btn {
+    width: 26px; height: 26px; background: #161822; border: 1px solid #1e2028;
+    border-radius: 5px; color: #6b7280; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; font-family: inherit;
+  }
+  .map-zoom-btn:hover { background: #1c1f2e; color: #c9d1d9; }
+  body.light .map-zoom-btn { background: #fff; border-color: #e5e7eb; color: #6b7280; }
+  body.light .map-zoom-btn:hover { background: #f3f4f6; color: #374151; }
+
+  /* ── Map legend ── */
+  .map-legend {
+    position: absolute; bottom: 12px; left: 12px;
+    background: #0f1117cc; border: 1px solid #1e2028;
+    border-radius: 7px; padding: 8px 10px; font-size: 9px;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .map-legend-item { display: flex; align-items: center; gap: 5px; color: #6b7280; }
+  body.light .map-legend { background: #ffffffcc; border-color: #e5e7eb; }
+  body.light .map-legend-item { color: #6b7280; }
+
+  /* ── Map link button & hint ── */
+  #dashMapBtnLink { padding: 4px 10px; border-radius: 6px; font-size: 11px; cursor: pointer; font-family: inherit; background: #14203a; border: 1px solid #3b82f644; color: #93c5fd; }
+  #dashMapBtnLink:hover { background: #1a2a4a; }
+  #dashMapBtnLink.link-active { background: #1e1040; border-color: #a855f7; color: #d8b4fe; }
+  body.light #dashMapBtnLink { background: #dbeafe; border-color: #93c5fd; color: #1e3a8a; }
+  #dashMapLinkHint { display: none; margin-top: 6px; padding: 5px 12px; background: #1a1040; border: 1px solid #a855f744; border-radius: 6px; color: #d8b4fe; font-size: 11px; text-align: center; }
+  #dashMapLinkHint.visible { display: block; }
+
+  /* ── Map empty state ── */
+  .map-empty {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+    color: #4b5563; font-size: 13px;
+  }
+
+  /* ── Map tooltip (generated by map-renderer.js) ── */
+  .map-tooltip {
+    position: absolute; background: #161822; border: 1px solid #2a3a50;
+    border-radius: 8px; padding: 8px 12px; pointer-events: none;
+    opacity: 0; transition: opacity 0.15s; z-index: 100; max-width: 220px;
+    font-size: 10px;
+  }
+  .map-tooltip-title { font-weight: 600; color: #e2e4e9; margin-bottom: 4px; }
+  .map-tooltip-meta  { color: #6b7280; }
+  .map-tooltip-head  { color: #22c55e; margin-top: 4px; font-weight: 600; }
+  body.light .map-tooltip { background: #fff; border-color: #e5e7eb; }
+  body.light .map-tooltip-title { color: #111318; }
+  body.light .map-tooltip-meta  { color: #6b7280; }
+
+  /* ── Map project selector buttons ── */
+  .map-proj-btn {
+    padding: 4px 10px; border-radius: 6px; font-size: 11px;
+    cursor: pointer; font-family: inherit;
+    background: #161822; border: 1px solid #1e2028; color: #6b7280;
+  }
+  .map-proj-btn:hover { background: #1c1f2e; }
+  .map-proj-btn.active { background: #1a3a2a; border-color: #22c55e44; color: #4ade80; }
+  body.light .map-proj-btn { background: #f3f4f6; border-color: #e5e7eb; color: #6b7280; }
+  body.light .map-proj-btn:hover { background: #e5e7eb; }
+  body.light .map-proj-btn.active { background: #dcfce7; border-color: #86efac; color: #166534; }
+</style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="header">
+    <a href="#" class="btn-back" id="dashBack">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M9 6H3M5 3L2 6l3 3" stroke="#60a5fa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span data-i18n="hist.back">Back</span>
+    </a>
+    <span class="header-count" id="countBadge">0 snapshots</span>
+    <div style="display:flex;gap:4px;margin-left:auto;">
+      <button id="dashTabHistory" class="dash-tab" data-i18n="hist.tab_history">История</button>
+      <button id="dashTabMap" class="dash-tab active-map" data-i18n="hist.tab_map">Mind Map</button>
+    </div>
+    <button class="theme-toggle" id="themeToggle">
+      <div class="theme-thumb" id="themeThumb"></div>
+    </button>
+  </div>
+
+  <!-- Diff panel -->
+  <div class="diff-panel" id="diffPanel">
+    <div class="diff-header">
+      <span id="diffTitle">Diff</span>
+      <button class="diff-close" id="diffCloseBtn">✕</button>
+    </div>
+    <div id="diffContent"><div class="diff-empty" data-i18n="dash.diff_empty">Select two snapshots to compare</div></div>
+  </div>
+
+  <div id="snapList" style="display:none;">
+  <!-- Filters -->
+  <div class="filters" id="filters">
+    <button class="filter-btn active" id="filterAll" data-host="all" data-i18n="hist.filter_all">All</button>
+  </div>
+
+  <!-- Cards -->
+  <div class="cards-grid" id="cardsGrid">
+    <div class="loading" data-i18n="hist.loading">Loading…</div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <button class="btn-export" id="btnExportAll" data-i18n="hist.export">⬇ Export</button>
+  </div>
+  </div>
+
+  <!-- Mind Map panel -->
+<div id="mapPanel" style="display:none;">
+  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+    <div style="display:flex;gap:6px;flex-wrap:wrap;flex:1;" id="mapProjSel"></div>
+    <button id="dashMapBtnLink" data-i18n="map.link">🔗 Link</button>
+  </div>
+  <div id="dashMapLinkHint"></div>
+  <div id="mapCanvas" class="map-canvas" style="margin-top:8px;">
+    <svg id="mapSvg" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:all;overflow:visible;"></svg>
+    <div id="mapEmpty" class="map-empty" data-i18n="map.empty">No data</div>
+    <div class="map-node-info" id="dashMapNodeInfo">
+      <div class="map-node-info-row">
+        <span class="map-node-info-proj" id="dashMapInfoProj"></span>
+        <span class="map-node-info-date" id="dashMapInfoDate"></span>
+      </div>
+      <div class="map-node-info-meta" id="dashMapInfoMeta"></div>
+      <button class="map-info-load-btn" id="dashMapInfoLoad" data-i18n="hist.load_snap">Загрузить слепок</button>
+    </div>
+    <div style="position:absolute;bottom:12px;right:12px;display:flex;flex-direction:column;gap:3px;">
+      <button id="mapZoomIn" class="map-zoom-btn" style="font-size:15px;">+</button>
+      <button id="mapZoomOut" class="map-zoom-btn" style="font-size:15px;">−</button>
+      <button id="mapZoomReset" class="map-zoom-btn" style="font-size:9px;">⊙</button>
+    </div>
+    <div class="map-legend">
+      <div class="map-legend-item"><div style="width:20px;height:2px;background:#22c55e;"></div><span data-i18n="map.legend_branch">branch</span></div>
+      <div class="map-legend-item"><div style="width:20px;height:2px;border-top:1.5px dashed #3b82f6;"></div><span data-i18n="map.legend_link">link</span></div>
+    </div>
+  </div>
+</div>
+
+<script src="i18n.js"></script>
+<script src="db.js"></script>
+<script src="shared-utils.js"></script>
+<script src="map-renderer.js"></script>
+<script src="dashboard.js"></script>
+</body>
+</html>

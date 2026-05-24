@@ -1,0 +1,104 @@
+﻿================================================================================
+CHROME WEB STORE — SessionPort
+================================================================================
+
+CATEGORY: Productivity
+
+--------------------------------------------------------------------------------
+SHORT DESCRIPTION (max 132 chars)
+--------------------------------------------------------------------------------
+Transfer AI context between Claude, ChatGPT, Grok, Gemini and more — without copy-paste. Save and restore sessions instantly.
+
+--------------------------------------------------------------------------------
+DETAILED DESCRIPTION
+--------------------------------------------------------------------------------
+SessionPort lets you transfer your work context between AI platforms without losing your session history.
+
+HOW IT WORKS:
+1. Open any AI chat (Claude, ChatGPT, Grok, Gemini, Mistral, Perplexity, DeepSeek)
+2. Press Quick or Full Transfer — the extension prompts the model to output a structured JSON snapshot of your session
+3. Open the extension in your next chat tab and press Paste — your full context is instantly restored
+
+FEATURES:
+• Cross-platform context transfer — works with Claude, ChatGPT, Grok, Gemini, Mistral, Perplexity, DeepSeek
+• Context snapshots — saves decisions, rules, working state and next steps from any AI session
+• Project management — organize snapshots by project; switch between projects in one click
+• Full history — browse, compare (diff) and restore any previous snapshot
+• Visual mind map — see snapshot relationships and session branches as an interactive SVG tree
+• File attachments — link files to snapshots and re-inject them automatically on transfer
+• Backup & restore — export all snapshots as JSON; import them back on any device
+• Offline-first — all data stored locally in your browser's IndexedDB, no servers, no account required
+• 9 languages — English, Русский, Deutsch, Français, Español, Português, 日本語, 한국어, 中文
+• Light and dark themes
+
+PRIVACY:
+All data stays in your browser. SessionPort does not collect, transmit or sell any personal data. No account required. Full privacy policy: [URL to privacy_policy.html]
+
+--------------------------------------------------------------------------------
+PERMISSIONS JUSTIFICATION (for Chrome Web Store submission form)
+--------------------------------------------------------------------------------
+
+storage
+  Used to save user preferences (theme, language, project names, hide-test toggle)
+  and current session flow state in chrome.storage.local. Required for settings
+  to persist between popup opens.
+
+activeTab
+  Used to read the URL of the currently active tab in order to identify which AI
+  platform is open (Claude, ChatGPT, Grok, etc.) and apply the correct content
+  capture and injection strategy for that platform.
+
+scripting
+  Used to inject the transfer prompt and session context text into the AI chat
+  input field on the target platform when the user presses Paste. Without this
+  permission the extension cannot write text into the editor.
+
+sidePanel
+  Used to display the SessionPort UI as a side panel alongside the AI chat window,
+  so users can operate the extension without leaving the AI platform tab.
+
+tabs
+  Used to query the active tab URL and to detect tab changes so the extension can
+  synchronize capture state when the user switches between AI platform tabs.
+
+alarms
+  Used to schedule a periodic background check that ensures the capture cycle
+  continues reliably even if the Manifest V3 service worker is suspended by Chrome.
+  Without alarms, long captures (> 30s) may miss the model's response.
+
+host_permissions:
+  https://chatgpt.com/*       — content script: capture ChatGPT responses, inject into ChatGPT editor
+  https://claude.ai/*         — content script: capture Claude responses, inject into Claude editor
+  https://grok.com/*          — content script: capture Grok responses, inject into Grok editor
+  https://gemini.google.com/* — content script: capture Gemini responses, inject into Gemini editor
+  https://www.perplexity.ai/* — content script: capture Perplexity responses, inject into Perplexity editor
+  https://perplexity.ai/*     — same as above (handles both www and non-www)
+  https://chat.mistral.ai/*   — content script: capture Mistral responses, inject into Mistral editor
+  https://chat.deepseek.com/* — content script: capture DeepSeek responses, inject into DeepSeek editor
+
+  Each host permission is required for the content script to run on that specific
+  AI platform. The content script reads the model's response (only when explicitly
+  triggered by the user pressing Quick/Full/Scan) and injects text into the chat
+  input (only when the user presses Paste). No data is collected silently.
+
+--------------------------------------------------------------------------------
+SCREENSHOTS NEEDED (1280×800 or 640×400, PNG)
+--------------------------------------------------------------------------------
+1. Main screen — show Quick/Full buttons, project bar, status "Ready to paste"
+2. History screen — show snapshot cards with project name, date, decisions preview
+3. Mind map — show SVG tree of snapshots with branches
+4. Settings screen — show theme toggle, language selector, export/import buttons
+5. Onboarding screen — show the 3-step first-launch guide
+
+PROMOTIONAL TILE: 440×280 PNG
+  Suggested: dark background (#0d0e14), SessionPort logo top-left,
+  tagline "Transfer AI context. Instantly." center, icons of Claude/ChatGPT/Grok
+  logos arranged at bottom.
+
+--------------------------------------------------------------------------------
+VERSION NOTES (for first submission)
+--------------------------------------------------------------------------------
+v1.0 — Initial public release.
+Supports: Claude, ChatGPT, Grok, Gemini, Mistral, Perplexity, DeepSeek.
+All data stored locally. No backend. No account required.
+================================================================================
