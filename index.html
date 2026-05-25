@@ -1,0 +1,1104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SessionPort — Transfer AI Context Between Chats</title>
+<meta name="description" content="Browser extension that captures your conversation from one AI platform and injects it into another. Claude, ChatGPT, Grok, Gemini, Mistral, Perplexity, DeepSeek. No servers. No account.">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+:root {
+  --bg:       #0f1117;
+  --surface:  #161822;
+  --surface2: #1c1f2e;
+  --border:   #1e2028;
+  --border2:  #2a3a50;
+  --text:     #e2e4e9;
+  --muted:    #6b7280;
+  --dim:      #4b5563;
+  --accent:   #aaff00;
+  --accent-g: rgba(170,255,0,0.12);
+  --green:    #22c55e;
+  --blue:     #60a5fa;
+  --purple:   #a78bfa;
+  --amber:    #f59e0b;
+  --red:      #f87171;
+  --cyan:     #06b6d4;
+
+  --claude:     #e8855a;
+  --chatgpt:    #74c99a;
+  --grok:       #a78bfa;
+  --gemini:     #60a5fa;
+  --mistral:    #f59e0b;
+  --perplexity: #38bdf8;
+  --deepseek:   #5eead4;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* ── NAV ── */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 40px;
+  background: rgba(15,17,23,0.92);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+}
+.nav-logo {
+  display: flex; align-items: center; gap: 9px;
+  text-decoration: none;
+}
+.nav-logo-icon {
+  width: 26px; height: 26px; border-radius: 7px;
+  background: var(--accent); display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; box-shadow: 0 0 12px rgba(170,255,0,0.35);
+}
+.nav-logo-text {
+  font-size: 14px; font-weight: 600; color: var(--text); letter-spacing: 0.01em;
+}
+.nav-links { display: flex; gap: 24px; align-items: center; }
+.nav-links a {
+  color: var(--muted); text-decoration: none; font-size: 13px;
+  font-weight: 500; transition: color 0.15s;
+}
+.nav-links a:hover { color: var(--text); }
+.nav-cta {
+  background: var(--accent) !important; color: #111318 !important;
+  padding: 6px 16px; border-radius: 6px; font-weight: 600 !important;
+  font-size: 13px !important; transition: background 0.15s, transform 0.1s !important;
+}
+.nav-cta:hover { background: #ccff00 !important; transform: translateY(-1px); }
+
+/* ── HERO ── */
+.hero {
+  min-height: 100vh;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; padding: 120px 24px 80px;
+  position: relative; overflow: hidden;
+}
+.hero-glow {
+  position: absolute; width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(170,255,0,0.05) 0%, transparent 70%);
+  top: 50%; left: 50%; transform: translate(-50%,-50%);
+  pointer-events: none;
+}
+.hero-chip {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--surface); border: 1px solid var(--border2);
+  border-radius: 100px; padding: 5px 14px;
+  font-size: 11px; font-weight: 500; color: var(--accent);
+  letter-spacing: 0.3px; margin-bottom: 32px;
+  animation: fadeUp 0.5s ease both;
+}
+.chip-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--accent); box-shadow: 0 0 7px var(--accent);
+  animation: pulse 2s ease infinite;
+}
+h1 {
+  font-size: clamp(36px, 5.5vw, 72px);
+  font-weight: 700; line-height: 1.08; letter-spacing: -1.5px;
+  margin-bottom: 20px;
+  animation: fadeUp 0.5s 0.08s ease both;
+}
+h1 em { font-style: normal; color: var(--accent); }
+h1 span.dim { color: var(--muted); }
+.hero-sub {
+  font-size: clamp(14px, 1.6vw, 17px);
+  color: var(--muted); max-width: 520px;
+  line-height: 1.65; font-weight: 400; margin-bottom: 10px;
+  animation: fadeUp 0.5s 0.16s ease both;
+}
+.hero-sub2 {
+  font-size: 13px; color: var(--dim); max-width: 420px;
+  line-height: 1.6; margin-bottom: 36px;
+  animation: fadeUp 0.5s 0.2s ease both;
+}
+.hero-sub2 span { color: var(--amber); font-weight: 500; }
+.hero-actions {
+  display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;
+  animation: fadeUp 0.5s 0.24s ease both;
+}
+.btn-primary {
+  background: var(--accent); color: #111318;
+  border: none; padding: 11px 26px; border-radius: 7px;
+  font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: none;
+  display: inline-flex; align-items: center; gap: 7px;
+  transition: background 0.15s, transform 0.12s, box-shadow 0.15s;
+  box-shadow: 0 0 24px rgba(170,255,0,0.22);
+}
+.btn-primary:hover {
+  background: #ccff00; transform: translateY(-2px);
+  box-shadow: 0 0 36px rgba(170,255,0,0.32);
+}
+.btn-secondary {
+  background: var(--surface); color: var(--text);
+  border: 1px solid var(--border2); padding: 11px 26px; border-radius: 7px;
+  font-size: 13px; font-weight: 500; cursor: pointer; text-decoration: none;
+  display: inline-flex; align-items: center; gap: 7px;
+  transition: border-color 0.15s, background 0.15s, transform 0.12s;
+}
+.btn-secondary:hover {
+  border-color: var(--accent); background: var(--accent-g); transform: translateY(-2px);
+}
+.btn-zip {
+  background: transparent; color: var(--muted);
+  border: 1px solid var(--border); padding: 11px 20px; border-radius: 7px;
+  font-size: 12px; font-weight: 500; cursor: pointer; text-decoration: none;
+  display: inline-flex; align-items: center; gap: 7px;
+  transition: border-color 0.15s, color 0.15s, transform 0.12s;
+}
+.btn-zip:hover { border-color: var(--border2); color: var(--text); transform: translateY(-2px); }
+.btn-zip-note { font-size: 10px; color: var(--dim); margin-top: 8px; }
+
+.platforms-strip {
+  display: flex; align-items: center; justify-content: center;
+  gap: 7px; flex-wrap: wrap; margin-top: 52px;
+  animation: fadeUp 0.5s 0.32s ease both;
+}
+.p-pill {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 100px; padding: 6px 13px;
+  font-size: 12px; font-weight: 500; color: var(--muted);
+  transition: border-color 0.15s, color 0.15s;
+}
+.p-pill:hover { color: var(--text); border-color: var(--border2); }
+.p-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.any-llm-note {
+  margin-top: 14px; font-size: 11px; color: var(--dim);
+  animation: fadeUp 0.5s 0.38s ease both;
+}
+.any-llm-note span { color: var(--muted); }
+
+/* ── SECTIONS ── */
+section { padding: 96px 24px; max-width: 1100px; margin: 0 auto; }
+.section-label {
+  font-size: 10px; letter-spacing: 2px; color: var(--accent);
+  text-transform: uppercase; margin-bottom: 12px; font-weight: 500;
+}
+h2 {
+  font-size: clamp(26px, 3.8vw, 46px); font-weight: 700;
+  letter-spacing: -1px; line-height: 1.1; margin-bottom: 14px;
+}
+.section-sub {
+  font-size: 15px; color: var(--muted); max-width: 480px;
+  line-height: 1.65; font-weight: 400;
+}
+
+/* ── STEPS ── */
+.steps-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 1px; margin-top: 52px;
+  background: var(--border); border-radius: 12px; overflow: hidden;
+  border: 1px solid var(--border);
+}
+.step-card {
+  background: var(--surface); padding: 28px 26px;
+  transition: background 0.2s;
+}
+.step-card:hover { background: var(--surface2); }
+.step-num {
+  font-size: 10px; color: var(--accent); letter-spacing: 1.5px;
+  margin-bottom: 18px; font-weight: 500;
+}
+.step-icon-box {
+  width: 40px; height: 40px; border-radius: 10px;
+  background: var(--accent-g); border: 1px solid rgba(170,255,0,0.18);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; margin-bottom: 16px;
+}
+.step-title { font-size: 16px; font-weight: 600; margin-bottom: 10px; }
+.step-desc { font-size: 13px; color: var(--muted); line-height: 1.65; }
+
+/* ── DEMO BLOCK ── */
+.demo-block {
+  margin-top: 52px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: 12px; overflow: hidden;
+}
+.demo-topbar {
+  display: flex; align-items: center; gap: 6px;
+  padding: 11px 16px; border-bottom: 1px solid var(--border);
+  background: var(--surface2);
+}
+.wd { width: 10px; height: 10px; border-radius: 50%; }
+.wd-r { background: #ff5f57; } .wd-y { background: #febc2e; } .wd-g { background: #28c840; }
+.demo-url {
+  flex: 1; text-align: center;
+  font-size: 11px; color: var(--muted);
+  background: var(--border); border-radius: 5px; padding: 3px 12px;
+  margin: 0 16px; font-family: monospace;
+}
+.demo-body { display: grid; grid-template-columns: 1fr 256px; }
+.chat-col { padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+.chat-msg { display: flex; gap: 10px; align-items: flex-start; }
+.av {
+  width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700;
+}
+.av-u { background: var(--border2); color: var(--muted); }
+.av-ai { background: rgba(232,133,90,0.18); color: var(--claude); border: 1px solid rgba(232,133,90,0.25); }
+.bubble {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 10px; padding: 10px 14px;
+  font-size: 12px; line-height: 1.65; color: var(--text); flex: 1;
+}
+.bubble-u { background: rgba(170,255,0,0.04); border-color: rgba(170,255,0,0.12); }
+.bubble code {
+  font-family: ui-monospace, monospace; font-size: 11px; color: var(--accent);
+  background: rgba(170,255,0,0.08); border-radius: 3px; padding: 1px 4px;
+}
+.ext-panel {
+  border-left: 1px solid var(--border); background: var(--surface2);
+  display: flex; flex-direction: column;
+}
+.ext-hdr {
+  padding: 11px 14px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 8px;
+}
+.ext-logo-box {
+  width: 22px; height: 22px; border-radius: 6px;
+  background: var(--accent); display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; box-shadow: 0 0 8px rgba(170,255,0,0.3);
+}
+.ext-title { font-size: 12px; font-weight: 600; flex: 1; }
+.ext-ver {
+  font-size: 10px; color: var(--muted);
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 4px; padding: 1px 6px;
+}
+.ext-body { padding: 12px 14px; flex: 1; display: flex; flex-direction: column; gap: 10px; }
+.status-bar {
+  display: flex; align-items: center; gap: 7px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 7px; padding: 7px 10px;
+  font-size: 11px; color: var(--muted);
+}
+.s-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--green); flex-shrink: 0;
+  box-shadow: 0 0 6px var(--green);
+  animation: pulse 2s ease infinite;
+}
+.snap-box {
+  background: var(--surface); border: 1px solid var(--border2);
+  border-radius: 8px; padding: 10px 12px;
+  font-size: 11px; line-height: 1.7; color: var(--muted);
+}
+.snap-id { font-family: ui-monospace, monospace; color: var(--accent); font-size: 10px; margin-bottom: 6px; }
+.snap-box strong { color: var(--text); font-weight: 500; }
+.ext-btn {
+  background: var(--accent); color: #111318;
+  border: none; border-radius: 7px; padding: 9px 12px;
+  font-size: 12px; font-weight: 600; cursor: pointer;
+  width: 100%; margin-top: auto;
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+  font-family: inherit;
+}
+.ext-btn:hover { background: #ccff00; }
+
+/* ── TRANSFER ── */
+.transfer-row {
+  margin-top: 52px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
+}
+.t-box {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; overflow: hidden;
+}
+.t-hdr {
+  padding: 12px 16px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 9px; font-size: 13px; font-weight: 600;
+}
+.t-tag { margin-left: auto; font-size: 10px; letter-spacing: 1px; font-weight: 500; }
+.t-body { padding: 16px; display: flex; flex-direction: column; gap: 9px; }
+.t-snap {
+  background: var(--surface2); border: 1px solid var(--border2);
+  border-radius: 9px; padding: 11px 13px;
+}
+.t-meta { font-size: 10px; color: var(--dim); font-family: ui-monospace, monospace; }
+.arrow-mid {
+  display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 0 20px;
+}
+.arr-lbl { font-size: 9px; letter-spacing: 1.5px; color: var(--accent); font-weight: 500; }
+.arr-line {
+  width: 2px; height: 40px;
+  background: linear-gradient(to bottom, transparent, var(--accent), transparent);
+  animation: glow-flow 1.5s ease infinite;
+}
+.arr-tip {
+  width: 0; height: 0;
+  border-left: 5px solid transparent; border-right: 5px solid transparent;
+  border-top: 7px solid var(--accent);
+  filter: drop-shadow(0 0 4px var(--accent));
+}
+
+/* ── PROMPT LIBRARY SECTION ── */
+.pl-demo {
+  margin-top: 52px; display: grid; grid-template-columns: 1fr 300px; gap: 20px;
+  align-items: start;
+}
+.pl-desc-col { display: flex; flex-direction: column; gap: 20px; }
+.pl-feature-row {
+  display: flex; gap: 14px; align-items: flex-start;
+  padding: 16px; background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; transition: border-color 0.2s;
+}
+.pl-feature-row:hover { border-color: rgba(245,158,11,0.3); }
+.pl-feat-icon {
+  width: 36px; height: 36px; border-radius: 8px; flex-shrink: 0;
+  background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.2);
+  display: flex; align-items: center; justify-content: center; font-size: 16px;
+}
+.pl-feat-title { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+.pl-feat-desc { font-size: 12px; color: var(--muted); line-height: 1.55; }
+.pl-mockup {
+  background: var(--surface); border: 1px solid rgba(245,158,11,0.25);
+  border-radius: 12px; overflow: hidden;
+  box-shadow: 0 0 40px rgba(245,158,11,0.06);
+}
+.pl-mockup-hdr {
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  background: var(--surface2);
+  display: flex; align-items: center; gap: 8px;
+}
+.pl-mockup-title { font-size: 11px; font-weight: 600; color: var(--amber); flex: 1; }
+.pl-mockup-count {
+  font-size: 10px; color: var(--dim);
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; padding: 1px 7px;
+}
+.pl-mockup-body { padding: 10px; display: flex; flex-direction: column; gap: 7px; }
+.pl-card {
+  background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px 11px;
+  transition: border-color 0.15s;
+}
+.pl-card:hover { border-color: rgba(245,158,11,0.3); }
+.pl-card.pl-card-fav { border-left: 3px solid var(--amber); }
+.pl-card-top { display: flex; align-items: center; gap: 5px; margin-bottom: 4px; }
+.pl-card-star { color: var(--amber); font-size: 10px; }
+.pl-card-name { font-size: 11px; font-weight: 600; color: var(--text); flex: 1; }
+.pl-card-preview {
+  font-size: 9.5px; color: var(--dim); font-family: ui-monospace, monospace;
+  background: var(--surface); border-radius: 4px; padding: 5px 7px;
+  margin-bottom: 6px; line-height: 1.5;
+}
+.pl-var { color: var(--amber); background: rgba(245,158,11,0.1); border-radius: 2px; padding: 0 2px; }
+.pl-card-tags { display: flex; gap: 4px; margin-bottom: 7px; flex-wrap: wrap; }
+.pl-tag {
+  font-size: 9px; padding: 2px 6px; border-radius: 3px;
+  background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2);
+  color: var(--amber);
+}
+.pl-card-actions { display: flex; gap: 5px; }
+.pl-btn-insert {
+  flex: 1; padding: 5px; border-radius: 5px; font-size: 10px; font-weight: 600;
+  background: rgba(170,255,0,0.08); border: 1px solid rgba(170,255,0,0.2); color: var(--accent);
+  cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px;
+  font-family: inherit;
+}
+.pl-btn-edit {
+  padding: 5px 8px; border-radius: 5px; font-size: 10px;
+  background: var(--surface); border: 1px solid var(--border); color: var(--muted);
+  cursor: pointer; font-family: inherit;
+}
+.pl-mockup-search {
+  width: 100%; padding: 7px 10px; background: var(--bg); border: 1px solid var(--border);
+  border-radius: 6px; color: var(--text); font-size: 10px; font-family: inherit;
+  margin-bottom: 4px;
+}
+.pl-mockup-search::placeholder { color: var(--dim); }
+
+/* ── MIND MAP ── */
+.map-demo {
+  margin-top: 52px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: 12px;
+  padding: 32px; position: relative; overflow: hidden; min-height: 340px;
+}
+.map-demo::before {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(circle at 50% 40%, rgba(170,255,0,0.03) 0%, transparent 55%);
+}
+svg.mmap { width: 100%; height: 300px; display: block; }
+.map-hint {
+  text-align: center; font-size: 11px; color: var(--dim);
+  margin-top: 16px; font-family: ui-monospace, monospace;
+}
+
+/* ── FEATURES ── */
+.feats-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px; margin-top: 48px;
+}
+.feat {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; padding: 22px 20px;
+  transition: border-color 0.2s, transform 0.15s;
+}
+.feat:hover { border-color: var(--border2); transform: translateY(-2px); }
+.feat.feat-new {
+  border-color: rgba(245,158,11,0.3);
+  background: linear-gradient(135deg, var(--surface) 0%, rgba(245,158,11,0.04) 100%);
+}
+.feat.feat-new:hover { border-color: rgba(245,158,11,0.5); }
+.feat-head { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 13px; }
+.feat-icon {
+  width: 38px; height: 38px; border-radius: 9px;
+  background: var(--accent-g); border: 1px solid rgba(170,255,0,0.16);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px;
+}
+.feat.feat-new .feat-icon {
+  background: rgba(245,158,11,0.1); border-color: rgba(245,158,11,0.25);
+}
+.badge-new {
+  font-size: 9px; font-weight: 700; color: var(--amber);
+  background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3);
+  border-radius: 4px; padding: 2px 6px; letter-spacing: 0.3px;
+}
+.feat-title { font-size: 14px; font-weight: 600; margin-bottom: 7px; }
+.feat-desc { font-size: 12px; color: var(--muted); line-height: 1.6; }
+
+/* ── PLATFORMS TABLE ── */
+.plat-table {
+  margin-top: 48px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: 12px; overflow: hidden;
+}
+.pt-hdr {
+  display: grid; grid-template-columns: 2fr 1fr 1fr;
+  padding: 11px 20px; border-bottom: 1px solid var(--border);
+  font-size: 10px; letter-spacing: 1.5px; color: var(--dim);
+  text-transform: uppercase; font-weight: 500;
+}
+.pt-row {
+  display: grid; grid-template-columns: 2fr 1fr 1fr;
+  padding: 14px 20px; border-bottom: 1px solid var(--border);
+  align-items: center; transition: background 0.15s;
+}
+.pt-row:last-child { border-bottom: none; }
+.pt-row:hover { background: var(--surface2); }
+.pt-name { display: flex; align-items: center; gap: 9px; font-size: 13px; font-weight: 600; }
+.pt-dot { width: 8px; height: 8px; border-radius: 50%; }
+.yes { color: var(--green); font-size: 15px; }
+.no { color: var(--dim); }
+
+/* ── CTA FINAL ── */
+.cta-final {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 16px; padding: 72px 40px; text-align: center;
+  margin-top: 52px; position: relative; overflow: hidden;
+}
+.cta-final::before {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(circle at 50% 0%, rgba(170,255,0,0.05) 0%, transparent 55%);
+  pointer-events: none;
+}
+.cta-final h2 { margin-bottom: 14px; }
+.cta-final p {
+  font-size: 15px; color: var(--muted); max-width: 420px;
+  margin: 0 auto 36px; line-height: 1.65;
+}
+.cta-actions {
+  display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-bottom: 20px;
+}
+.cta-note { font-size: 11px; color: var(--dim); }
+
+/* ── OSS ── */
+.oss-block {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 56px 40px; text-align: center;
+  margin-top: 52px; position: relative; overflow: hidden;
+}
+.oss-block::before {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(circle at 50% 0%, rgba(170,255,0,0.04) 0%, transparent 50%);
+}
+.oss-block h2 { margin-bottom: 12px; }
+.oss-block p {
+  font-size: 15px; color: var(--muted); line-height: 1.65;
+  margin-bottom: 32px; max-width: 460px; margin-inline: auto;
+}
+.oss-badges { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 32px; }
+.oss-badge {
+  background: var(--surface2); border: 1px solid var(--border2);
+  border-radius: 7px; padding: 8px 16px;
+  font-size: 12px; color: var(--muted);
+}
+.oss-badge b { color: var(--accent); font-weight: 600; }
+
+/* ── FOOTER ── */
+footer {
+  padding: 28px 40px; border-top: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 12px; color: var(--dim);
+}
+footer a { color: var(--dim); text-decoration: none; transition: color 0.15s; }
+footer a:hover { color: var(--muted); }
+.foot-links { display: flex; gap: 20px; }
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.2; } }
+@keyframes glow-flow { 0%,100% { opacity: 0.2; } 50% { opacity: 1; } }
+
+.reveal {
+  opacity: 0; transform: translateY(24px);
+  transition: opacity 0.65s ease, transform 0.65s ease;
+}
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+@media (max-width: 860px) {
+  nav { padding: 12px 20px; }
+  .nav-links { gap: 14px; }
+  .steps-grid { grid-template-columns: 1fr; }
+  .demo-body { grid-template-columns: 1fr; }
+  .ext-panel { border-left: none; border-top: 1px solid var(--border); }
+  .transfer-row { grid-template-columns: 1fr; gap: 16px; }
+  .arrow-mid { transform: rotate(90deg); margin: 4px 0; }
+  .pl-demo { grid-template-columns: 1fr; }
+  .oss-block { padding: 36px 20px; }
+  .cta-final { padding: 48px 20px; }
+  footer { flex-direction: column; gap: 14px; text-align: center; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">
+    <div class="nav-logo-icon">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <circle cx="7" cy="3" r="2" fill="#111318"/>
+        <circle cx="7" cy="11" r="2" fill="#111318"/>
+        <circle cx="3" cy="7" r="2" fill="#111318"/>
+        <circle cx="11" cy="7" r="2" fill="#111318"/>
+        <line x1="7" y1="5" x2="7" y2="9" stroke="#111318" stroke-width="1.5"/>
+        <line x1="5" y1="7" x2="9" y2="7" stroke="#111318" stroke-width="1.5"/>
+      </svg>
+    </div>
+    <span class="nav-logo-text">SessionPort</span>
+  </a>
+  <div class="nav-links">
+    <a href="#how">How it works</a>
+    <a href="#prompts">Prompts</a>
+    <a href="#features">Features</a>
+    <a href="#platforms">Platforms</a>
+    <a href="https://github.com/Den1style/sessionport" class="nav-cta">GitHub ↗</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-glow"></div>
+  <div class="hero-chip">
+    <div class="chip-dot"></div>
+    v1.0 · 7 platforms · 9 languages
+  </div>
+  <h1>Transfer AI context<br><em>without</em> <span class="dim">losing</span><br>a single thought</h1>
+  <p class="hero-sub">Capture a conversation from Claude and continue it in Grok, Gemini, ChatGPT or any other AI — the new model picks up exactly where you left off.</p>
+  <p class="hero-sub2">Plus a <span>prompt library</span> — write once, insert everywhere across all 7 platforms.</p>
+  <div class="hero-actions">
+    <a href="https://github.com/Den1style/sessionport/releases/tag/v1.0" class="btn-primary">
+      <svg width="13" height="13" viewBox="0 0 12 12" fill="none"><path d="M6 1v7M3 5l3 3 3-3M1 10h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Download .zip
+    </a>
+    <a href="https://github.com/Den1style/sessionport" class="btn-secondary">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+      View on GitHub
+    </a>
+    <a href="#how" class="btn-zip">How it works ↓</a>
+  </div>
+  <div class="btn-zip-note" style="animation: fadeUp 0.5s 0.28s ease both">
+    Download .zip → drag to <code style="font-size:10px;color:var(--muted)">chrome://extensions</code> → enable Developer mode
+  </div>
+
+  <div class="platforms-strip">
+    <div class="p-pill"><div class="p-dot" style="background:var(--claude)"></div>Claude</div>
+    <div class="p-pill"><div class="p-dot" style="background:var(--chatgpt)"></div>ChatGPT</div>
+    <div class="p-pill"><div class="p-dot" style="background:var(--grok)"></div>Grok</div>
+    <div class="p-pill"><div class="p-dot" style="background:var(--gemini)"></div>Gemini</div>
+    <div class="p-pill"><div class="p-dot" style="background:var(--mistral)"></div>Mistral</div>
+    <div class="p-pill"><div class="p-dot" style="background:var(--perplexity)"></div>Perplexity</div>
+    <div class="p-pill"><div class="p-dot" style="background:var(--deepseek)"></div>DeepSeek</div>
+  </div>
+  <div class="any-llm-note">+ <span>paste snapshot into any other LLM via clipboard</span></div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="how" class="reveal">
+  <div class="section-label">How it works</div>
+  <h2>Three steps,<br>zero context lost.</h2>
+  <p class="section-sub">No manual copy-pasting, no summaries. SessionPort reads, formats, and injects — you just pick the platform.</p>
+
+  <div class="steps-grid">
+    <div class="step-card">
+      <div class="step-num">01 / CAPTURE</div>
+      <div class="step-icon-box">⚡</div>
+      <div class="step-title">One click, full snapshot</div>
+      <div class="step-desc">Open the side panel on any supported platform. Click Capture — SessionPort reads the full conversation and saves a structured JSON snapshot: decisions made, approaches rejected, open questions, history.</div>
+    </div>
+    <div class="step-card">
+      <div class="step-num">02 / TRANSFER</div>
+      <div class="step-icon-box">↗</div>
+      <div class="step-title">Switch platform, click Paste</div>
+      <div class="step-desc">Open the target AI platform. Click Paste in the panel — SessionPort formats the snapshot and injects it directly into the input field. Works with ProseMirror, Quill, and contenteditable editors.</div>
+    </div>
+    <div class="step-card">
+      <div class="step-num">03 / CONTINUE</div>
+      <div class="step-icon-box">⟳</div>
+      <div class="step-title">The new AI just continues</div>
+      <div class="step-desc">The target AI receives the full context — history, what was decided, what was rejected — and continues naturally. Switch platforms as many times as you need. Every state is saved in history.</div>
+    </div>
+  </div>
+
+  <div class="demo-block">
+    <div class="demo-topbar">
+      <div class="wd wd-r"></div><div class="wd wd-y"></div><div class="wd wd-g"></div>
+      <div class="demo-url">claude.ai/chat</div>
+    </div>
+    <div class="demo-body">
+      <div class="chat-col">
+        <div class="chat-msg">
+          <div class="av av-u">U</div>
+          <div class="bubble bubble-u">I want to build a reading tracker app — books, pages per day, streaks. What's the right tech stack for a solo developer?</div>
+        </div>
+        <div class="chat-msg">
+          <div class="av av-ai">C</div>
+          <div class="bubble">For a solo dev I'd go with <code>React Native + Expo</code> — one codebase for iOS and Android. Backend: <code>Supabase</code> for auth + Postgres + realtime. Streaks: store <code>reading_date</code> as DATE in user's local timezone — never derive from UTC server-side, that's the classic edge case...</div>
+        </div>
+        <div class="chat-msg">
+          <div class="av av-u">U</div>
+          <div class="bubble bubble-u">Decided on React Native + Expo + Supabase. DATE-based streaks. What's the book data model?</div>
+        </div>
+        <div class="chat-msg">
+          <div class="av av-ai">C</div>
+          <div class="bubble">Table <code>books</code>: id, user_id, title, author, total_pages, status. Table <code>sessions</code>: id, book_id, reading_date, pages_read. Streak is computed from sessions grouped by date...</div>
+        </div>
+      </div>
+      <div class="ext-panel">
+        <div class="ext-hdr">
+          <div class="ext-logo-box">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <circle cx="6" cy="2.5" r="1.8" fill="#111318"/>
+              <circle cx="6" cy="9.5" r="1.8" fill="#111318"/>
+              <circle cx="2.5" cy="6" r="1.8" fill="#111318"/>
+              <circle cx="9.5" cy="6" r="1.8" fill="#111318"/>
+              <line x1="6" y1="4.3" x2="6" y2="7.7" stroke="#111318" stroke-width="1.4"/>
+              <line x1="4.3" y1="6" x2="7.7" y2="6" stroke="#111318" stroke-width="1.4"/>
+            </svg>
+          </div>
+          <div class="ext-title">SessionPort</div>
+          <div class="ext-ver">v1.0</div>
+        </div>
+        <div class="ext-body">
+          <div class="status-bar">
+            <div class="s-dot"></div>
+            Monitoring · claude.ai
+          </div>
+          <div class="snap-box">
+            <div class="snap-id">SP-a4f8e2b1</div>
+            <strong>Project:</strong> Reading tracker<br>
+            <strong>Stack:</strong> RN + Expo + Supabase<br>
+            <strong>Decided:</strong> DATE streaks, local tz<br>
+            <strong>Rejected:</strong> UTC timestamps<br>
+            <strong>Next:</strong> book data model
+          </div>
+          <button class="ext-btn">⚡ Capture Context</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TRANSFER DEMO -->
+<section class="reveal" style="padding-top:0">
+  <div class="transfer-row">
+    <div class="t-box">
+      <div class="t-hdr">
+        <div class="p-dot" style="background:var(--claude)"></div>
+        Claude
+        <div class="t-tag" style="color:var(--muted)">SOURCE</div>
+      </div>
+      <div class="t-body">
+        <div class="t-snap">
+          <div class="snap-id">SP-a4f8e2b1</div>
+          <div style="font-size:11px;color:var(--muted);line-height:1.7">
+            <strong style="color:var(--text);font-weight:500">Project:</strong> Reading tracker app<br>
+            <strong style="color:var(--text);font-weight:500">Stack:</strong> React Native, Expo, Supabase<br>
+            <strong style="color:var(--text);font-weight:500">Rejected:</strong> UTC streak calc, Flutter<br>
+            <strong style="color:var(--text);font-weight:500">Next:</strong> Offline sync strategy
+          </div>
+        </div>
+        <div class="t-meta">3 decisions · 2 rejected · 8 messages</div>
+      </div>
+    </div>
+    <div class="arrow-mid">
+      <div class="arr-lbl">INJECT</div>
+      <div class="arr-line"></div>
+      <div class="arr-tip"></div>
+    </div>
+    <div class="t-box">
+      <div class="t-hdr">
+        <div class="p-dot" style="background:var(--deepseek)"></div>
+        DeepSeek
+        <div class="t-tag" style="color:var(--accent)">TARGET</div>
+      </div>
+      <div class="t-body">
+        <div class="t-snap" style="border-color:rgba(94,234,212,0.25);background:rgba(94,234,212,0.04)">
+          <div class="snap-id" style="color:var(--deepseek)">CONTEXT INJECTED ✓</div>
+          <div style="font-size:11px;color:var(--muted);line-height:1.7">
+            <strong style="color:var(--text);font-weight:500">Continuing from Claude:</strong><br>
+            Stack: React Native + Expo + Supabase<br>
+            Streak: DATE-based, client timezone<br>
+            Next: offline sync + book search API
+          </div>
+        </div>
+        <div class="t-meta" style="color:var(--deepseek)">No context lost · ready to continue</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROMPT LIBRARY -->
+<section id="prompts" class="reveal">
+  <div class="section-label">Prompt Library</div>
+  <h2>Write once,<br>insert everywhere.</h2>
+  <p class="section-sub">Build your personal library of reusable prompts. Insert any prompt into any of the 7 supported AI platforms in one click — with variable substitution and file attachments.</p>
+
+  <div class="pl-demo">
+    <div class="pl-desc-col">
+      <div class="pl-feature-row">
+        <div class="pl-feat-icon">🔤</div>
+        <div>
+          <div class="pl-feat-title">Variables <code style="font-size:11px;color:var(--amber);background:rgba(245,158,11,0.1);border-radius:3px;padding:1px 5px">{{name}}</code></div>
+          <div class="pl-feat-desc">Add placeholders to any prompt. Before inserting, SessionPort asks you to fill them in — the final text is assembled and injected instantly.</div>
+        </div>
+      </div>
+      <div class="pl-feature-row">
+        <div class="pl-feat-icon">🏷️</div>
+        <div>
+          <div class="pl-feat-title">Tags & search</div>
+          <div class="pl-feat-desc">Organize prompts with custom tags. Filter by tag or search by title — find what you need without scrolling through the whole library.</div>
+        </div>
+      </div>
+      <div class="pl-feature-row">
+        <div class="pl-feat-icon">📎</div>
+        <div>
+          <div class="pl-feat-title">Attach files</div>
+          <div class="pl-feat-desc">Link a file to a prompt — it gets attached to the AI input automatically when you insert. Perfect for code reviews, templates, or reference docs.</div>
+        </div>
+      </div>
+      <div class="pl-feature-row">
+        <div class="pl-feat-icon">☁️</div>
+        <div>
+          <div class="pl-feat-title">Sync via Google Drive</div>
+          <div class="pl-feat-desc">Prompts sync automatically to your Google Drive alongside snapshot backups. Switch devices without losing your library.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pl-mockup">
+      <div class="pl-mockup-hdr">
+        <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><rect x="1.5" y="0.5" width="9" height="11" rx="1.5" stroke="#f59e0b" stroke-width="1.2"/><path d="M4 3.5h4M4 5.5h4M4 7.5h2" stroke="#f59e0b" stroke-width="1" stroke-linecap="round"/></svg>
+        <span class="pl-mockup-title">Prompt Library</span>
+        <span class="pl-mockup-count">12 prompts</span>
+      </div>
+      <div class="pl-mockup-body">
+        <input class="pl-mockup-search" type="text" placeholder="Search by title or tag…" readonly>
+
+        <div class="pl-card pl-card-fav">
+          <div class="pl-card-top">
+            <span class="pl-card-star">★</span>
+            <span class="pl-card-name">Code review</span>
+          </div>
+          <div class="pl-card-preview">Review <span class="pl-var">{{language}}</span> code in <span class="pl-var">{{file}}</span>. Focus on: security, performance, readability.</div>
+          <div class="pl-card-tags"><span class="pl-tag">dev</span><span class="pl-tag">review</span></div>
+          <div class="pl-card-actions">
+            <button class="pl-btn-insert">⚡ Insert</button>
+            <button class="pl-btn-edit">Edit</button>
+          </div>
+        </div>
+
+        <div class="pl-card">
+          <div class="pl-card-top">
+            <span class="pl-card-name">Explain like I'm 5</span>
+          </div>
+          <div class="pl-card-preview">Explain <span class="pl-var">{{concept}}</span> in simple terms, no jargon.</div>
+          <div class="pl-card-tags"><span class="pl-tag">learning</span></div>
+          <div class="pl-card-actions">
+            <button class="pl-btn-insert">⚡ Insert</button>
+            <button class="pl-btn-edit">Edit</button>
+          </div>
+        </div>
+
+        <div class="pl-card">
+          <div class="pl-card-top">
+            <span class="pl-card-name">Refactor for readability</span>
+          </div>
+          <div class="pl-card-preview">Refactor the following code. Keep behaviour identical. Improve naming, reduce nesting.</div>
+          <div class="pl-card-tags"><span class="pl-tag">dev</span><span class="pl-tag">refactor</span></div>
+          <div class="pl-card-actions">
+            <button class="pl-btn-insert">⚡ Insert</button>
+            <button class="pl-btn-edit">Edit</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MIND MAP -->
+<section id="map" class="reveal">
+  <div class="section-label">Visual history</div>
+  <h2>Sessions mapped<br>like a git tree.</h2>
+  <p class="section-sub">Every capture, fork, and platform switch is visualized as an interactive graph. Click any node to restore that exact snapshot.</p>
+
+  <div class="map-demo">
+    <svg class="mmap" viewBox="0 0 860 280">
+      <defs>
+        <marker id="arr" markerWidth="7" markerHeight="6" refX="5" refY="3" orient="auto">
+          <polygon points="0 0, 7 3, 0 6" fill="#2a3a50"/>
+        </marker>
+        <filter id="glow-n">
+          <feGaussianBlur stdDeviation="3.5" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+      <rect x="58" y="16" width="104" height="24" rx="6" fill="rgba(34,197,94,0.1)" stroke="#22c55e" stroke-opacity="0.4" stroke-width="1"/>
+      <text x="110" y="32" text-anchor="middle" font-size="10" fill="#22c55e" font-family="system-ui">Reading tracker</text>
+      <line x1="110" y1="40" x2="110" y2="62" stroke="#1e2028" stroke-width="1.5" marker-end="url(#arr)"/>
+      <circle cx="110" cy="80" r="20" fill="rgba(34,197,94,0.08)" stroke="#22c55e" stroke-opacity="0.5" stroke-width="1.5"/>
+      <text x="110" y="76" text-anchor="middle" font-size="8" fill="#6b7280" font-family="system-ui">claude</text>
+      <text x="110" y="87" text-anchor="middle" font-size="8" fill="#e2e4e9" font-family="system-ui">init</text>
+      <line x1="110" y1="100" x2="110" y2="126" stroke="#1e2028" stroke-width="1.5" marker-end="url(#arr)"/>
+      <circle cx="110" cy="144" r="20" fill="rgba(34,197,94,0.08)" stroke="#22c55e" stroke-opacity="0.5" stroke-width="1.5"/>
+      <text x="110" y="140" text-anchor="middle" font-size="8" fill="#6b7280" font-family="system-ui">grok</text>
+      <text x="110" y="151" text-anchor="middle" font-size="8" fill="#e2e4e9" font-family="system-ui">v2</text>
+      <line x1="110" y1="164" x2="110" y2="190" stroke="#22c55e" stroke-width="1.5" stroke-opacity="0.6" marker-end="url(#arr)"/>
+      <circle cx="110" cy="210" r="22" fill="rgba(34,197,94,0.15)" stroke="#22c55e" stroke-width="2" filter="url(#glow-n)"/>
+      <text x="110" y="206" text-anchor="middle" font-size="8" fill="#22c55e" font-family="system-ui">deepseek</text>
+      <text x="110" y="218" text-anchor="middle" font-size="9" fill="#22c55e" font-weight="bold" font-family="system-ui">HEAD</text>
+      <line x1="128" y1="150" x2="196" y2="150" stroke="#1e2028" stroke-width="1.5" marker-end="url(#arr)"/>
+      <circle cx="216" cy="150" r="17" fill="rgba(34,197,94,0.05)" stroke="#22c55e" stroke-opacity="0.3" stroke-width="1"/>
+      <text x="216" y="146" text-anchor="middle" font-size="7.5" fill="#6b7280" font-family="system-ui">chatgpt</text>
+      <text x="216" y="157" text-anchor="middle" font-size="7.5" fill="#4b5563" font-family="system-ui">fork A</text>
+
+      <rect x="298" y="16" width="104" height="24" rx="6" fill="rgba(245,158,11,0.1)" stroke="#f59e0b" stroke-opacity="0.4" stroke-width="1"/>
+      <text x="350" y="32" text-anchor="middle" font-size="10" fill="#f59e0b" font-family="system-ui">Auth refactor</text>
+      <line x1="350" y1="40" x2="350" y2="62" stroke="#1e2028" stroke-width="1.5" marker-end="url(#arr)"/>
+      <circle cx="350" cy="80" r="20" fill="rgba(245,158,11,0.08)" stroke="#f59e0b" stroke-opacity="0.5" stroke-width="1.5"/>
+      <text x="350" y="76" text-anchor="middle" font-size="8" fill="#6b7280" font-family="system-ui">claude</text>
+      <text x="350" y="87" text-anchor="middle" font-size="8" fill="#e2e4e9" font-family="system-ui">init</text>
+      <line x1="350" y1="100" x2="350" y2="126" stroke="#1e2028" stroke-width="1.5" marker-end="url(#arr)"/>
+      <circle cx="350" cy="144" r="20" fill="rgba(245,158,11,0.08)" stroke="#f59e0b" stroke-opacity="0.5" stroke-width="1.5"/>
+      <text x="350" y="140" text-anchor="middle" font-size="8" fill="#6b7280" font-family="system-ui">gemini</text>
+      <text x="350" y="151" text-anchor="middle" font-size="8" fill="#e2e4e9" font-family="system-ui">v2</text>
+      <line x1="350" y1="164" x2="350" y2="190" stroke="#f59e0b" stroke-width="1.5" stroke-opacity="0.5" marker-end="url(#arr)"/>
+      <circle cx="350" cy="208" r="20" fill="rgba(245,158,11,0.12)" stroke="#f59e0b" stroke-width="1.5" filter="url(#glow-n)"/>
+      <text x="350" y="204" text-anchor="middle" font-size="8" fill="#f59e0b" font-family="system-ui">chatgpt</text>
+      <text x="350" y="215" text-anchor="middle" font-size="8" fill="#f59e0b" font-family="system-ui">latest</text>
+
+      <rect x="538" y="16" width="104" height="24" rx="6" fill="rgba(96,165,250,0.1)" stroke="#60a5fa" stroke-opacity="0.4" stroke-width="1"/>
+      <text x="590" y="32" text-anchor="middle" font-size="10" fill="#60a5fa" font-family="system-ui">UI redesign</text>
+      <line x1="590" y1="40" x2="590" y2="62" stroke="#1e2028" stroke-width="1.5" marker-end="url(#arr)"/>
+      <circle cx="590" cy="80" r="20" fill="rgba(96,165,250,0.08)" stroke="#60a5fa" stroke-opacity="0.5" stroke-width="1.5"/>
+      <text x="590" y="76" text-anchor="middle" font-size="8" fill="#6b7280" font-family="system-ui">claude</text>
+      <text x="590" y="87" text-anchor="middle" font-size="8" fill="#e2e4e9" font-family="system-ui">init</text>
+      <line x1="590" y1="100" x2="590" y2="126" stroke="#1e2028" stroke-width="1.5" marker-end="url(#arr)"/>
+      <circle cx="590" cy="144" r="20" fill="rgba(96,165,250,0.08)" stroke="#60a5fa" stroke-opacity="0.5" stroke-width="1.5"/>
+      <text x="590" y="140" text-anchor="middle" font-size="8" fill="#6b7280" font-family="system-ui">mistral</text>
+      <text x="590" y="151" text-anchor="middle" font-size="8" fill="#e2e4e9" font-family="system-ui">v2</text>
+      <line x1="572" y1="150" x2="504" y2="150" stroke="#1e2028" stroke-width="1.5" marker-end="url(#arr)"/>
+      <circle cx="484" cy="150" r="17" fill="rgba(96,165,250,0.05)" stroke="#60a5fa" stroke-opacity="0.3" stroke-width="1"/>
+      <text x="484" y="146" text-anchor="middle" font-size="7.5" fill="#6b7280" font-family="system-ui">perplexity</text>
+      <text x="484" y="157" text-anchor="middle" font-size="7.5" fill="#4b5563" font-family="system-ui">fork B</text>
+      <line x1="590" y1="164" x2="590" y2="190" stroke="#60a5fa" stroke-width="1.5" stroke-opacity="0.5" marker-end="url(#arr)"/>
+      <circle cx="590" cy="208" r="20" fill="rgba(96,165,250,0.12)" stroke="#60a5fa" stroke-width="1.5" filter="url(#glow-n)"/>
+      <text x="590" y="204" text-anchor="middle" font-size="8" fill="#60a5fa" font-family="system-ui">grok</text>
+      <text x="590" y="215" text-anchor="middle" font-size="8" fill="#60a5fa" font-family="system-ui">latest</text>
+
+      <circle cx="720" cy="80"  r="10" fill="rgba(34,197,94,0.15)"  stroke="#22c55e" stroke-width="1.5" filter="url(#glow-n)"/>
+      <text x="738" y="84" font-size="10" fill="#6b7280" font-family="system-ui">HEAD · active snapshot</text>
+      <circle cx="720" cy="108" r="10" fill="rgba(34,197,94,0.08)"  stroke="#22c55e" stroke-opacity="0.5" stroke-width="1"/>
+      <text x="738" y="112" font-size="10" fill="#6b7280" font-family="system-ui">snapshot in chain</text>
+      <circle cx="720" cy="136" r="10" fill="rgba(34,197,94,0.04)"  stroke="#22c55e" stroke-opacity="0.25" stroke-width="1"/>
+      <text x="738" y="140" font-size="10" fill="#6b7280" font-family="system-ui">forked branch</text>
+    </svg>
+    <div class="map-hint">interactive SVG · pan · zoom · click any node to restore · drag to reposition</div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features" class="reveal">
+  <div class="section-label">Features</div>
+  <h2>Everything in one<br>side panel.</h2>
+
+  <div class="feats-grid">
+    <div class="feat feat-new">
+      <div class="feat-head">
+        <div class="feat-icon">📚</div>
+        <span class="badge-new">NEW</span>
+      </div>
+      <div class="feat-title">Prompt Library</div>
+      <div class="feat-desc">Write once, insert everywhere. Build reusable prompts with <code style="font-size:11px;color:var(--amber)">{{variables}}</code>, tags, file attachments, and favorites. Syncs via Google Drive.</div>
+    </div>
+    <div class="feat">
+      <div class="feat-head"><div class="feat-icon">🗄️</div></div>
+      <div class="feat-title">Fully local storage</div>
+      <div class="feat-desc">All snapshots live in IndexedDB on your device. No servers, no accounts required. Nothing leaves your browser unless you enable Drive backup.</div>
+    </div>
+    <div class="feat">
+      <div class="feat-head"><div class="feat-icon">📋</div></div>
+      <div class="feat-title">Snapshot history</div>
+      <div class="feat-desc">Every capture is saved with timestamp, platform, project, and size. Browse, restore, or delete from the dashboard. Soft-delete with trash & restore.</div>
+    </div>
+    <div class="feat">
+      <div class="feat-head"><div class="feat-icon">🌿</div></div>
+      <div class="feat-title">Fork & branch</div>
+      <div class="feat-desc">Fork any snapshot to explore an alternative path without losing your main thread. The mind map shows the full git-like branching graph.</div>
+    </div>
+    <div class="feat">
+      <div class="feat-head"><div class="feat-icon">🗂️</div></div>
+      <div class="feat-title">Projects</div>
+      <div class="feat-desc">Organize snapshots into named projects. Switch the active project from the popup. Filter history and the map view by project.</div>
+    </div>
+    <div class="feat">
+      <div class="feat-head"><div class="feat-icon">🔁</div></div>
+      <div class="feat-title">Diff & compare</div>
+      <div class="feat-desc">Select any two snapshots to see a structured diff — added, removed, and changed fields. Understand exactly what changed between iterations.</div>
+    </div>
+    <div class="feat">
+      <div class="feat-head"><div class="feat-icon">☁️</div></div>
+      <div class="feat-title">Google Drive backup</div>
+      <div class="feat-desc">Optional automatic backup to your Google Drive at a configurable interval. Restore any backup from the settings panel. Uses drive.file scope only.</div>
+    </div>
+    <div class="feat">
+      <div class="feat-head"><div class="feat-icon">🌍</div></div>
+      <div class="feat-title">9 languages</div>
+      <div class="feat-desc">Full UI localization in English, Russian, Spanish, German, French, Chinese, Japanese, Korean, and Portuguese. Switch from settings.</div>
+    </div>
+    <div class="feat">
+      <div class="feat-head"><div class="feat-icon">📤</div></div>
+      <div class="feat-title">Any LLM via clipboard</div>
+      <div class="feat-desc">For platforms not in the list, copy the formatted snapshot to clipboard and paste it manually into any AI chat. Works everywhere.</div>
+    </div>
+  </div>
+</section>
+
+<!-- PLATFORMS -->
+<section id="platforms" class="reveal">
+  <div class="section-label">Supported platforms</div>
+  <h2>7 platforms.<br>Full capture & inject.</h2>
+  <p class="section-sub">Native support for reading and injecting on all seven. For anything else — clipboard paste works everywhere.</p>
+
+  <div class="plat-table">
+    <div class="pt-hdr">
+      <div>Platform</div>
+      <div>Capture</div>
+      <div>Inject</div>
+    </div>
+    <div class="pt-row">
+      <div class="pt-name"><div class="pt-dot" style="background:var(--claude)"></div>Claude</div>
+      <div class="yes">✓</div><div class="yes">✓</div>
+    </div>
+    <div class="pt-row">
+      <div class="pt-name"><div class="pt-dot" style="background:var(--chatgpt)"></div>ChatGPT</div>
+      <div class="yes">✓</div><div class="yes">✓</div>
+    </div>
+    <div class="pt-row">
+      <div class="pt-name"><div class="pt-dot" style="background:var(--grok)"></div>Grok</div>
+      <div class="yes">✓</div><div class="yes">✓</div>
+    </div>
+    <div class="pt-row">
+      <div class="pt-name"><div class="pt-dot" style="background:var(--gemini)"></div>Gemini</div>
+      <div class="yes">✓</div><div class="yes">✓</div>
+    </div>
+    <div class="pt-row">
+      <div class="pt-name"><div class="pt-dot" style="background:var(--mistral)"></div>Mistral</div>
+      <div class="yes">✓</div><div class="yes">✓</div>
+    </div>
+    <div class="pt-row">
+      <div class="pt-name"><div class="pt-dot" style="background:var(--perplexity)"></div>Perplexity</div>
+      <div class="yes">✓</div><div class="yes">✓</div>
+    </div>
+    <div class="pt-row">
+      <div class="pt-name"><div class="pt-dot" style="background:var(--deepseek)"></div>DeepSeek</div>
+      <div class="yes">✓</div><div class="yes">✓</div>
+    </div>
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<section class="reveal" style="padding-top:0">
+  <div class="cta-final">
+    <div class="section-label" style="text-align:center">Get started</div>
+    <h2>Stop losing context<br>between chats.</h2>
+    <p>Download SessionPort, drag it into Chrome, and your first transfer takes less than a minute.</p>
+    <div class="cta-actions">
+      <a href="https://github.com/Den1style/sessionport/releases/tag/v1.0" class="btn-primary">
+        <svg width="13" height="13" viewBox="0 0 12 12" fill="none"><path d="M6 1v7M3 5l3 3 3-3M1 10h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Download v1.0 (.zip)
+      </a>
+      <a href="https://github.com/Den1style/sessionport" class="btn-secondary">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        GitHub
+      </a>
+    </div>
+    <div class="cta-note">
+      chrome://extensions → Developer mode ON → Load unpacked → select folder
+    </div>
+  </div>
+</section>
+
+<!-- OSS -->
+<section class="reveal" style="padding-top:0">
+  <div class="oss-block">
+    <div class="section-label" style="text-align:center">Open source</div>
+    <h2>Free for solo use. Forever.</h2>
+    <p>SessionPort is source-available under Elastic License 2.0. All snapshots stay on your device. No tracking, no analytics, no external API calls unless you enable Drive backup.</p>
+    <div class="oss-badges">
+      <div class="oss-badge">License: <b>Elastic 2.0</b></div>
+      <div class="oss-badge">Solo use: <b>free</b></div>
+      <div class="oss-badge">Storage: <b>100% local</b></div>
+      <div class="oss-badge">Servers: <b>none</b></div>
+      <div class="oss-badge">Tracking: <b>none</b></div>
+    </div>
+    <a href="https://github.com/Den1style/sessionport" class="btn-primary" style="position:relative">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+      Den1style/sessionport
+    </a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div>SessionPort · v1.0 · Elastic License 2.0</div>
+  <div class="foot-links">
+    <a href="https://github.com/Den1style/sessionport">GitHub</a>
+    <a href="https://github.com/Den1style/sessionport/blob/main/LICENSE">License</a>
+    <a href="mailto:denisvetyshev@gmail.com">Contact</a>
+    <a href="https://t.me/SessionPort">Telegram</a>
+  </div>
+</footer>
+
+<script>
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); }});
+}, { threshold: 0.08 });
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+</script>
+</body>
+</html>
