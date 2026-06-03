@@ -353,9 +353,7 @@ function tryCapture() {
 
           }
 
-          _saveAndStop(cand, parsed);
-
-          return;
+          if (!_isTemplatePlaceholder(parsed)) { _saveAndStop(cand, parsed); return; }
 
         }
 
@@ -471,7 +469,7 @@ function tryCapture() {
 
   }
 
-  _saveAndStop(jsonCand, p3);
+  if (!_isTemplatePlaceholder(p3)) { _saveAndStop(jsonCand, p3); }
 
 }
 
