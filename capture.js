@@ -73,8 +73,9 @@ function stopCapture() {
 // One-shot: сканирует страницу прямо сейчас без запуска интервала.
 // Используется кнопкой «Захватить вручную» и как fallback.
 function captureNow() {
-  // Reset seen/length so we scan everything on page
-  seenBlocks.clear();
+  // Reset length anchor so Branches 2/3 scan full message text.
+  // Do NOT clear seenBlocks — that would re-expose the template code block
+  // to Branch 1 and trigger premature capture again.
   _captureStartTextLen = 0;
   setBadge('CAPTURING');
   showToast('Сканирую страницу…', 'info');
@@ -134,6 +135,11 @@ function tryCapture() {
         : ['meta','core','ledger','runtime','validation_protocol'];
       const miss = requiredFields.filter(k => !parsed[k]);
       if (miss.length > 0) { console.warn('[PR] Пропущены поля:', miss.join(',')); continue; }
+      if (_isTemplatePlaceholder(parsed)) {
+        seenBlocks.add(fp); // mark template as seen so it won't re-trigger
+        console.warn('[PR] Template placeholder detected — skipping premature capture');
+        continue;
+      }
       _saveAndStop(content, parsed);
       return;
     } catch (e) {
@@ -173,11 +179,16 @@ function tryCapture() {
           ? ['meta','dna','decisions','state']
           : ['meta','core','ledger','runtime'];
         if (reqB2.every(k => parsed[k])) {
-          if (new TextEncoder().encode(cand).length > MAX_JSON_BYTES) {
-            showToast('JSON >500KB — захват отменён', 'error'); stopCapture(); setBadge('ERROR'); return;
+          if (_isTemplatePlaceholder(parsed)) {
+            console.warn('[PR] Branch 2: template placeholder — skipping');
+            /* fall through — keep polling */
+          } else {
+            if (new TextEncoder().encode(cand).length > MAX_JSON_BYTES) {
+              showToast('JSON >500KB — захват отменён', 'error'); stopCapture(); setBadge('ERROR'); return;
+            }
+            _saveAndStop(cand, parsed);
+            return;
           }
-          _saveAndStop(cand, parsed);
-          return;
         }
       }
     }
@@ -229,6 +240,10 @@ function tryCapture() {
   const isV11b3 = p3?.meta?.version === '1.1';
   const reqB3 = isV11b3 ? ['meta','dna','decisions','state'] : ['meta','core','ledger','runtime'];
   if (!reqB3.every(k => p3[k])) return;
+  if (_isTemplatePlaceholder(p3)) {
+    console.warn('[PR] Branch 3: template placeholder — skipping');
+    return; // keep polling — real JSON will come when LLM finishes
+  }
 
   const b3bytes = new TextEncoder().encode(jsonCand).length;
   if (b3bytes > MAX_JSON_BYTES) {
@@ -241,6 +256,25 @@ function tryCapture() {
 // ── Внутренние хелперы ───────────────────────────────────
 function _notSessionPort(parsed) {
   return String(parsed?.meta?.protocol || '').trim().toLowerCase() !== 'sessionport';
+}
+
+// Guard against capturing the SIMPLE_CONFIRM template itself.
+// The template is injected into chat before capture starts; if the DOM update
+// races ahead of seenBlocks snapshotting, the template gets captured as a
+// "real" snapshot (it passes protocol + required-field checks but has "…" values).
+function _isTemplatePlaceholder(parsed) {
+  // v1.1 template markers
+  if (parsed?.dna?.goal?.endsWith('(глагол+задача+приоритет)')) return true;
+  if (parsed?.state?.current_task === '…') return true;
+  if (parsed?.state?.next_step   === '…') return true;
+  // All decisions are placeholders
+  const decisions = parsed?.decisions;
+  if (Array.isArray(decisions) && decisions.length > 0 &&
+      decisions.every(d => d.what === '…' || d.what === '...' || !d.what)) return true;
+  // Legacy v1.0 template markers
+  if (parsed?.core?.intent === 'инструкция-продолжение (глагол+задача+приоритет)') return true;
+  if (parsed?.runtime?.current_status === '…') return true;
+  return false;
 }
 
 function _saveAndStop(jsonStr, parsed) {
