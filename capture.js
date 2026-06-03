@@ -21,6 +21,7 @@ let captureSessionId  = 0;
 let seenBlocks        = new Set();
 
 let _captureStartTextLen = 0;  // text length of last assistant msg at capture start
+let _expectedTransferId = null; // set by SET_EXPECTED_TRANSFER_ID; null = no constraint
 
 
 
@@ -136,8 +137,11 @@ function stopCapture() {
 
   _captureStartTextLen = 0;
 
+  _expectedTransferId  = null;
+
 }
 
+function setExpectedTransferId(tid) { _expectedTransferId = tid || null; }
 
 
 // ── Ручной захват (SCAN NOW) ─────────────────────────────────
@@ -500,6 +504,15 @@ function _isTemplatePlaceholder(parsed) {
 }
 
 function _saveAndStop(jsonStr, parsed) {
+  // Reject snapshots with wrong transfer_id (old context re-captured instead of new one).
+  // Template placeholders are already rejected by _isTemplatePlaceholder before reaching here.
+  if (_expectedTransferId) {
+    const tid = parsed?.meta?.transfer_id;
+    if (tid && tid !== _expectedTransferId) {
+      console.warn('[PR] transfer_id mismatch — expected:', _expectedTransferId, 'got:', tid, '— skipping');
+      return; // keep polling for the correct snapshot
+    }
+  }
 
   const b64 = utf8ToBase64(jsonStr);
 

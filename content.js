@@ -16,6 +16,12 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     return true;
   }
 
+  if (msg.action === 'SET_EXPECTED_TRANSFER_ID') {
+    setExpectedTransferId(msg.transfer_id || null);
+    sendResponse({ success: true });
+    return false;
+  }
+
   if (msg.action === 'START_CAPTURE') {
     startCapture();
     sendResponse({ success: true });
