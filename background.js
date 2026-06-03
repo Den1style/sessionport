@@ -1,5 +1,5 @@
 ﻿/**
- * SessionPort v1.0 — Background Service Worker
+ * SessionPort v1.2.35 — Background Service Worker
  * db.js is inlined below (no importScripts — avoids MV3 SW restart issues).
  */
 
@@ -184,15 +184,12 @@ async function saveSnapshot(payload, source_host) {
   const size_bytes         = payloadStr.length;
   const now                = new Date().toISOString();
 
-  // Dedup 1: transfer_id — O(log n) via unique index (synced from db.js).
-  // Replaces old linear scan of top-20 which missed duplicates in large projects.
-  if (transfer_id) {
-    const dup = await getByTransferId(transfer_id);
-    if (dup) return null;
-  }
-  // Dedup 2: same content_hash within DEDUP_WINDOW_MS in same project
+  // Dedup: проверяем последние 20 снапшотов проекта
   const recentCutoff  = new Date(Date.now() - DEDUP_WINDOW_MS).toISOString();
   const allForProject = await listByProject(project, { limit: 20 });
+  // Dedup 1: exact transfer_id match — fast path (pre-check before write)
+  if (transfer_id && allForProject.find(s => s.transfer_id === transfer_id)) return null;
+  // Dedup 2: same content_hash within window
   if (allForProject.some(s => s.content_hash === content_hash && s.created_at > recentCutoff))
     return null;
 
