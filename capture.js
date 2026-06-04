@@ -134,6 +134,7 @@ function tryCapture() {
         : ['meta','core','ledger','runtime','validation_protocol'];
       const miss = requiredFields.filter(k => !parsed[k]);
       if (miss.length > 0) { console.warn('[PR] Пропущены поля:', miss.join(',')); continue; }
+      if (_isTemplatePlaceholder(parsed)) { continue; }
       _saveAndStop(content, parsed);
       return;
     } catch (e) {
@@ -241,6 +242,18 @@ function tryCapture() {
 // ── Внутренние хелперы ───────────────────────────────────
 function _notSessionPort(parsed) {
   return String(parsed?.meta?.protocol || '').trim().toLowerCase() !== 'sessionport';
+}
+
+
+function _isTemplatePlaceholder(parsed) {
+  if (parsed?.dna?.goal?.endsWith('(глагол+задача+приоритет)')) return true;
+  if (parsed?.state?.current_task === '…') return true;
+  if (parsed?.state?.next_step    === '…') return true;
+  const d = parsed?.decisions;
+  if (Array.isArray(d) && d.length > 0 && d.every(x => x.what === '…' || x.what === '...')) return true;
+  if (parsed?.core?.intent === 'инструкция-продолжение (глагол+задача+приоритет)') return true;
+  if (parsed?.runtime?.current_status === '…') return true;
+  return false;
 }
 
 function _saveAndStop(jsonStr, parsed) {
