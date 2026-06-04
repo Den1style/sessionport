@@ -572,8 +572,11 @@ const ADAPTERS = {
     ),
     findLastMessage: () => {
       // font-claude-response first: Claude removed data-message-author-role in 2026-06.
-      // byClass finds wrong outer container -> filtered=0 -> template captured.
+      // Claude now renders each section as a SEPARATE tiny div (e.g. "---END CONTEXT---").
+      // threshold >500 finds the last MEANINGFUL content div, skipping fragments.
       const byFont = document.querySelectorAll('[class*="font-claude-response"]');
+      for (let i = byFont.length - 1; i >= 0; i--)
+        if ((byFont[i].innerText || '').trim().length > 500) return byFont[i];
       for (let i = byFont.length - 1; i >= 0; i--)
         if ((byFont[i].innerText || '').trim().length > 10) return byFont[i];
       const byRole = document.querySelectorAll('[data-message-author-role="assistant"]');
