@@ -886,24 +886,27 @@ function _updatePromptsBtn(screenName) {
   if (!btn) return;
   const onPrompts = ['prompts', 'promptEdit', 'promptTrash'].includes(screenName);
   if (onPrompts) {
-    // Show as back-to-transfer button
+    // On prompts screen → button shows "Перенос/Transfer" → click returns to main
     btn.innerHTML = `
       <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
-        <path d="M7.5 2L2.5 5.5L7.5 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M1.5 3.5H9" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+        <path d="M7 1.5L9.5 3.5L7 5.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M9.5 7.5H2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+        <path d="M4 5.5L1.5 7.5L4 9.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <span>${PR_i18n.t('prompts.back')}</span>`;
-    btn.style.background = 'transparent';
-    btn.style.border = '1px solid rgba(255,255,255,0.12)';
-    btn.style.boxShadow = 'none';
+      <span>${PR_i18n.t('nav.transfer')}</span>`;
+    btn.style.background = '';
+    btn.style.border = '';
+    btn.style.boxShadow = '';
     btn.onclick = (e) => { e.stopPropagation(); showScreen('main'); };
   } else {
-    // Show as go-to-prompts button (default state)
+    // On main/transfer screen → button shows "Промпты/Prompts" → click goes to prompts
     btn.innerHTML = `
       <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
         <rect x="1.5" y="0.5" width="9" height="11" rx="1.5" stroke="currentColor" stroke-width="1.2"/>
         <path d="M4 3.5h4M4 5.5h4M4 7.5h2" stroke="currentColor" stroke-width="1" stroke-linecap="round"/>
       </svg>
-      <span data-i18n="prompts.nav_label">${PR_i18n.t('prompts.nav_label')}</span>`;
+      <span>${PR_i18n.t('prompts.nav_label')}</span>`;
     btn.style.background = '';
     btn.style.border = '';
     btn.style.boxShadow = '';

@@ -171,6 +171,7 @@ const PR_i18n = (() => {
 
       // ── Nav ──
       'nav.history': 'История',
+      'nav.transfer': 'Перенос',
       'nav.trash':   'Корзина',
       'nav.donate':  'Поддержать SessionPort',
       'nav.bug':     '🐛 Сообщить о баге',
@@ -560,6 +561,7 @@ const PR_i18n = (() => {
 
       // ── Nav ──
       'nav.history': 'History',
+      'nav.transfer': 'Transfer',
       'nav.trash':   'Trash',
       'nav.donate':  'Support SessionPort',
       'nav.bug':     '🐛 Report a bug',
@@ -948,6 +950,7 @@ const PR_i18n = (() => {
 
       // ── Nav ──
       'nav.history': 'Verlauf',
+      'nav.transfer': 'Transfer',
       'nav.trash':   'Papierkorb',
       'nav.donate':  'SessionPort unterstützen',
       'nav.bug':     '🐛 Fehler melden',
@@ -1337,6 +1340,7 @@ const PR_i18n = (() => {
 
       // ── Nav ──
       'nav.history': 'Historique',
+      'nav.transfer': 'Transfert',
       'nav.trash':   'Corbeille',
       'nav.donate':  'Soutenir SessionPort',
       'nav.bug':     '🐛 Signaler un bug',
@@ -1726,6 +1730,7 @@ const PR_i18n = (() => {
 
       // ── Nav ──
       'nav.history': 'Historial',
+      'nav.transfer': 'Transferencia',
       'nav.trash':   'Papelera',
       'nav.donate':  'Apoyar SessionPort',
       'nav.bug':     '🐛 Reportar un error',
@@ -2114,6 +2119,7 @@ const PR_i18n = (() => {
 
       // ── Nav ──
       'nav.history': '履歴',
+      'nav.transfer': '転送',
       'nav.trash':   'ゴミ箱',
       'nav.donate':  'SessionPortを支援',
       'nav.bug':     '🐛 バグを報告',
@@ -2502,6 +2508,7 @@ const PR_i18n = (() => {
 
       // ── Nav ──
       'nav.history': '기록',
+      'nav.transfer': '전송',
       'nav.trash':   '휴지통',
       'nav.donate':  'SessionPort 후원',
       'nav.bug':     '🐛 버그 신고',
@@ -2891,6 +2898,7 @@ const PR_i18n = (() => {
 
       // ── Nav ──
       'nav.history': '历史记录',
+      'nav.transfer': '传输',
       'nav.trash':   '回收站',
       'nav.donate':  '支持 SessionPort',
       'nav.bug':     '🐛 报告问题',
@@ -3279,6 +3287,7 @@ const PR_i18n = (() => {
 
       // ── Nav ──
       'nav.history': 'Histórico',
+      'nav.transfer': 'Transferência',
       'nav.trash':   'Lixeira',
       'nav.donate':  'Apoiar SessionPort',
       'nav.bug':     '🐛 Relatar um erro',
