@@ -91,13 +91,19 @@ const ADAPTERS = {
       'div.tiptap.ProseMirror[contenteditable="true"], div.ProseMirror[contenteditable="true"]'
     ),
     findLastMessage: () => {
+      // font-claude-response is the actual content div — most reliable in current Claude UI.
+      // byRole (data-message-author-role) was removed by Claude in 2026-06.
+      // byClass (group+relative+pb-) finds outer containers that may include
+      // restored context text, causing filtered=0 and wrong capture.
+      const byFont = document.querySelectorAll('[class*="font-claude-response"]');
+      for (let i = byFont.length - 1; i >= 0; i--)
+        if ((byFont[i].innerText || '').trim().length > 10) return byFont[i];
       const byRole = document.querySelectorAll('[data-message-author-role="assistant"]');
       for (let i = byRole.length - 1; i >= 0; i--)
         if (byRole[i].innerText?.trim().length > 10) return byRole[i];
       const byClass = document.querySelectorAll('div[class*="group"][class*="relative"][class*="pb-"]');
       if (byClass.length > 0) return byClass[byClass.length - 1];
-      const byFont = document.querySelectorAll('[class*="font-claude-response"]');
-      return byFont.length > 0 ? byFont[byFont.length - 1] : null;
+      return null;
     },
     findDropTarget: () => visibleFirst('div.ProseMirror[contenteditable="true"]'),
     inject: (...args) => injectProseMirror(...args),
