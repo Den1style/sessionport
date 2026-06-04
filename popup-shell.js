@@ -914,8 +914,8 @@ function _updatePromptsBtn(screenName) {
   }
 }
 
-document.getElementById('btnPrompts')?.addEventListener('click',       () => showScreen('prompts'));
-document.getElementById('btnPromptsBack')?.addEventListener('click',  () => showScreen('main'));
+// btnPrompts click is managed dynamically by _updatePromptsBtn() via btn.onclick
+// btnPromptsBack was removed from DOM (header button handles both directions)
 document.getElementById('btnAccount')?.addEventListener('click',      () => showScreen('settings'));
 document.getElementById('btnHistory')?.addEventListener('click',      () => showScreen('history'));
 document.getElementById('btnMap')?.addEventListener('click',          () => showScreen('map'));
