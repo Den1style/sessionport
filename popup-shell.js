@@ -874,6 +874,41 @@ function showScreen(name) {
   if (PERSISTENT_SCREENS.includes(name)) {
     chrome.storage.local.set({ last_screen: name });
   }
+  // Toggle header Prompts button: shows current context & navigates in reverse
+  _updatePromptsBtn(name);
+}
+
+// Updates the persistent header Prompts button depending on which screen is active.
+// On main/transfer: shows "Prompts" → navigates to prompts screen.
+// On prompts/promptEdit/promptTrash: shows "← Back" → navigates back to main.
+function _updatePromptsBtn(screenName) {
+  const btn = document.getElementById('btnPrompts');
+  if (!btn) return;
+  const onPrompts = ['prompts', 'promptEdit', 'promptTrash'].includes(screenName);
+  if (onPrompts) {
+    // Show as back-to-transfer button
+    btn.innerHTML = `
+      <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+        <path d="M7.5 2L2.5 5.5L7.5 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>${PR_i18n.t('prompts.back')}</span>`;
+    btn.style.background = 'transparent';
+    btn.style.border = '1px solid rgba(255,255,255,0.12)';
+    btn.style.boxShadow = 'none';
+    btn.onclick = (e) => { e.stopPropagation(); showScreen('main'); };
+  } else {
+    // Show as go-to-prompts button (default state)
+    btn.innerHTML = `
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+        <rect x="1.5" y="0.5" width="9" height="11" rx="1.5" stroke="currentColor" stroke-width="1.2"/>
+        <path d="M4 3.5h4M4 5.5h4M4 7.5h2" stroke="currentColor" stroke-width="1" stroke-linecap="round"/>
+      </svg>
+      <span data-i18n="prompts.nav_label">${PR_i18n.t('prompts.nav_label')}</span>`;
+    btn.style.background = '';
+    btn.style.border = '';
+    btn.style.boxShadow = '';
+    btn.onclick = (e) => { e.stopPropagation(); showScreen('prompts'); };
+  }
 }
 
 document.getElementById('btnPrompts')?.addEventListener('click',       () => showScreen('prompts'));
@@ -1287,5 +1322,8 @@ document.addEventListener('visibilitychange', () => {
 chrome.storage.local.get('last_screen', res => {
   if (res.last_screen && PERSISTENT_SCREENS.includes(res.last_screen) && res.last_screen !== 'main') {
     showScreen(res.last_screen);
+  } else {
+    // Init button state for main screen on first open
+    _updatePromptsBtn('main');
   }
 });
