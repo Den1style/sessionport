@@ -571,13 +571,17 @@ const ADAPTERS = {
       'div.tiptap.ProseMirror[contenteditable="true"], div.ProseMirror[contenteditable="true"]'
     ),
     findLastMessage: () => {
+      // font-claude-response first: Claude removed data-message-author-role in 2026-06.
+      // byClass finds wrong outer container -> filtered=0 -> template captured.
+      const byFont = document.querySelectorAll('[class*="font-claude-response"]');
+      for (let i = byFont.length - 1; i >= 0; i--)
+        if ((byFont[i].innerText || '').trim().length > 10) return byFont[i];
       const byRole = document.querySelectorAll('[data-message-author-role="assistant"]');
       for (let i = byRole.length - 1; i >= 0; i--)
         if (byRole[i].innerText?.trim().length > 10) return byRole[i];
       const byClass = document.querySelectorAll('div[class*="group"][class*="relative"][class*="pb-"]');
       if (byClass.length > 0) return byClass[byClass.length - 1];
-      const byFont = document.querySelectorAll('[class*="font-claude-response"]');
-      return byFont.length > 0 ? byFont[byFont.length - 1] : null;
+      return null;
     },
     findDropTarget: () => visibleFirst('div.ProseMirror[contenteditable="true"]'),
     inject: (...args) => injectProseMirror(...args),
@@ -995,6 +999,7 @@ function tryCapture() {
           : ['meta','core','ledger','runtime','validation_protocol'];
         const miss = requiredFields.filter(k => !parsed[k]);
         if (miss.length > 0) { console.warn('[PR] Пропущены поля:', miss.join(',')); continue; }
+        if (_isTemplatePlaceholder(parsed)) { continue; }
       } else {
         // Flat/simplified format — enough to have protocol + at least intent or runtime_state
         const hasContent = parsed.intent || parsed.runtime_state || parsed.core || parsed.critical_decisions;
@@ -1124,6 +1129,17 @@ function _notSessionPort(parsed) {
   return !rootOk;
 }
 
+
+function _isTemplatePlaceholder(parsed) {
+  if (parsed?.dna?.goal?.endsWith('(глагол+задача+приоритет)')) return true;
+  if (parsed?.state?.current_task === '…') return true;
+  if (parsed?.state?.next_step    === '…') return true;
+  const d = parsed?.decisions;
+  if (Array.isArray(d) && d.length > 0 && d.every(x => x.what === '…' || x.what === '...')) return true;
+  if (parsed?.core?.intent === 'инструкция-продолжение (глагол+задача+приоритет)') return true;
+  if (parsed?.runtime?.current_status === '…') return true;
+  return false;
+}
 let _savingInProgress = false;        // sync guard against concurrent _saveAndStop calls
 let _expectedTransferId = null;       // UUID set by popup before INJECT_PROMPT generation step
 let _lastSavedTransferId = null;      // UUID of last successfully saved snapshot (prevents same-session double-capture)
