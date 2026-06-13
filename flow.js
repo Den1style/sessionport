@@ -470,7 +470,8 @@ document.getElementById('btnCopyJSON')?.addEventListener('click', () => {
           '2. decisions — memorize all. type:"rejected" — never suggest again, reason is in "why"\n' +
           '3. state — continue from here. state.next_step — your first action\n' +
           '4. instructions — follow as your own rules\n' +
-          '5. implicit (if present) — calibrate style from user_profile; assumptions with confidence:low — clarify with user\n\n' +
+          '5. open_threads (if present) — unresolved questions; keep them live, do not treat them as closed\n' +
+          '6. implicit (if present): calibrate style and detail from user_profile; honor adaptation_log — do not re-suggest what the user already abandoned; assumptions by confidence — low: do not act silently, ask first; medium: act but flag the assumption in your first reply; high: accept as fact\n\n' +
           'After loading, answer the questions from validation.questions. Answers must match validation.expected — if not, re-read the snapshot.\n\n' +
           '---BEGIN CONTEXT---\n' + json + '\n---END CONTEXT---'
         : 'ПРОТОКОЛ SessionPort — ВОССТАНОВЛЕНИЕ КОНТЕКСТА.\n\n' +
@@ -479,7 +480,8 @@ document.getElementById('btnCopyJSON')?.addEventListener('click', () => {
           '2. decisions — запомни все. type:"rejected" — никогда не предлагай повторно, причина в "why"\n' +
           '3. state — продолжай отсюда. state.next_step — твоё первое действие\n' +
           '4. instructions — следуй как собственным правилам\n' +
-          '5. implicit (если есть) — откалибруй стиль по user_profile; assumptions с confidence:low — уточни у пользователя\n\n' +
+          '5. open_threads (если есть) — нерешённые вопросы; держи их в работе, не считай закрытыми\n' +
+          '6. implicit (если есть): откалибруй стиль и детальность по user_profile; соблюдай adaptation_log — не предлагай заново то, от чего пользователь уже отказался; assumptions по confidence — low: не действуй молча, сначала уточни; medium: действуй, но отметь допущение в первом ответе; high: прими как факт\n\n' +
           'После загрузки ответь на вопросы из validation.questions. Ответы должны соответствовать validation.expected — если нет, перечитай слепок.\n\n' +
           '---BEGIN CONTEXT---\n' + json + '\n---END CONTEXT---';
       navigator.clipboard.writeText(prompt)
