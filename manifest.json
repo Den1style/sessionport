@@ -1,7 +1,7 @@
 ﻿{
   "manifest_version": 3,
   "name": "SessionPort",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Transfer LLM context between Claude, ChatGPT, Grok, Gemini, Mistral, Deepseek and Perplexity without copy-paste. Saves snapshots, tracks history, attaches files.",
   "permissions": [
     "storage",
