@@ -84,7 +84,7 @@ async function gdrive_disconnect() {
   await new Promise(r => chrome.identity.clearAllCachedAuthTokens(r));
   await chrome.storage.local.remove([
     'gd_connected', 'gd_email', 'gd_user_id', 'gd_folder_id',
-    'gd_last_backup', 'gd_interval'
+    'gd_last_backup', 'gd_interval', 'gd_last_sync'
   ]);
   chrome.alarms.clear('gdrive_backup', () => {});
 }
@@ -240,4 +240,66 @@ async function gdrive_setInterval(val) {
   chrome.alarms.clear('gdrive_backup', () => {});
   const mins = { '6h': 360, '24h': 1440, '7d': 10080 }[val];
   if (mins) chrome.alarms.create('gdrive_backup', { periodInMinutes: mins });
+}
+
+// ── Two-way sync (canonical file: pull → merge → push) ────
+// Cross-device merge medium. One file per account in the user's own Drive; both
+// this browser and (later) the iOS app read/write it. Conflict resolution is
+// per-snapshot last-write-wins via state_at inside SessionPortDB.applySyncMerge.
+const GDRIVE_SYNC_FILE = 'sessionport-sync.json';
+
+async function _gdSyncFileId(token, folderId) {
+  const q = encodeURIComponent(
+    `name='${GDRIVE_SYNC_FILE}' and '${folderId}' in parents and trashed=false`
+  );
+  const r = await _gdFetch(token,
+    `https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id)&pageSize=1`);
+  if (!r.ok) throw new Error(`Sync list ${r.status}`);
+  const { files } = await r.json();
+  return files?.[0]?.id || null;
+}
+
+async function gdrive_syncNow() {
+  const token    = await _gdToken(false);
+  const folderId = await _gdFolder(token);
+  let fileId     = await _gdSyncFileId(token, folderId);
+  let pulled     = { added: 0, updated: 0 };
+
+  // 1) Pull remote canonical file (if any) and merge into the local DB.
+  if (fileId) {
+    const dl = await _gdFetch(token,
+      `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`);
+    if (!dl.ok) throw new Error(`Sync download ${dl.status}`);
+    const text = await dl.text();
+    if (text.length > GDRIVE_MAX_RESTORE_MB * 1_000_000) throw new Error('Sync file too large');
+    let parsed;
+    try { parsed = JSON.parse(text); } catch { throw new Error('Invalid sync file'); }
+    if (parsed.schema_version !== 1 || !Array.isArray(parsed.snapshots)) {
+      throw new Error('Not a valid SessionPort sync file');
+    }
+    pulled = await SessionPortDB.applySyncMerge(text);
+  }
+
+  // 2) Push the merged whole-DB export back to the same canonical file.
+  const merged = await SessionPortDB.exportAll();
+  if (fileId) {
+    const up = await _gdFetch(token,
+      `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media&fields=id`,
+      { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: merged });
+    if (!up.ok) throw new Error(`Sync upload ${up.status}`);
+  } else {
+    const form = new FormData();
+    form.append('metadata', new Blob([JSON.stringify({
+      name: GDRIVE_SYNC_FILE, parents: [folderId], mimeType: 'application/json'
+    })], { type: 'application/json' }));
+    form.append('file', new Blob([merged], { type: 'application/json' }));
+    const cr = await _gdFetch(token,
+      'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',
+      { method: 'POST', body: form });
+    if (!cr.ok) throw new Error(`Sync create ${cr.status}`);
+    fileId = (await cr.json()).id;
+  }
+
+  await chrome.storage.local.set({ gd_last_sync: Date.now() });
+  return { pulled, syncedAt: Date.now() };
 }
