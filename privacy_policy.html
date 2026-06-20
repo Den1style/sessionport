@@ -18,16 +18,16 @@
 </head>
 <body>
   <h1>Privacy Policy</h1>
-  <div class="updated">Last updated: May 15, 2026</div>
+  <div class="updated">Last updated: June 17, 2026</div>
 
   <div class="highlight">
-    SessionPort stores all data exclusively in your browser's local storage (IndexedDB and chrome.storage.local). No data is transmitted to external servers. No account is required.
+    SessionPort stores your data in your browser's local storage (IndexedDB and chrome.storage.local). SessionPort operates no servers and receives none of your data. Optionally, you may connect Google Drive to sync your snapshots across your own devices — that data goes only to your own Google Drive account, never to us.
   </div>
 
   <h2>What we collect</h2>
   <p>SessionPort does not collect personal information. The extension processes the following data locally on your device:</p>
   <ul>
-    <li><strong>AI chat content</strong> — text from AI model responses (Claude, ChatGPT, Grok, Gemini, Mistral, Perplexity, DeepSeek) that you explicitly capture using the extension. This data is stored only in your browser's IndexedDB and never leaves your device.</li>
+    <li><strong>AI chat content</strong> — text from AI model responses (Claude, ChatGPT, Grok, Gemini, Mistral, Perplexity, DeepSeek) that you explicitly capture using the extension. This data is stored in your browser's IndexedDB and stays on your device unless you enable Google Drive sync (see below).</li>
     <li><strong>Extension settings</strong> — your preferences (theme, language, project names, hide-test toggle) stored in chrome.storage.local on your device.</li>
     <li><strong>Attached files</strong> — files you manually attach to snapshots, stored locally in IndexedDB as binary data.</li>
   </ul>
@@ -42,8 +42,17 @@
   </ul>
 
   <h2>Data storage</h2>
-  <p>All snapshot data is stored in your browser's IndexedDB under the SessionPort database. Settings are stored in chrome.storage.local. Both are scoped to your browser profile and do not sync across devices unless you use Chrome's built-in profile sync (which is controlled by Google, not SessionPort).</p>
+  <p>All snapshot data is stored in your browser's IndexedDB under the SessionPort database. Settings are stored in chrome.storage.local. By default this is scoped to your browser profile and does not leave your device.</p>
   <p>You can export all your data at any time using the Export feature in Settings → Backup, and delete it by uninstalling the extension or clearing browser storage.</p>
+
+  <h2>Google Drive sync (optional)</h2>
+  <p>SessionPort offers an optional Google Drive integration. It is off by default and only activates when you explicitly connect your Google account in Settings.</p>
+  <ul>
+    <li><strong>Where your data goes.</strong> When enabled, your snapshots are saved to a folder in <em>your own</em> Google Drive so they can sync across your devices. The data is transferred directly between your browser and Google Drive. SessionPort runs no servers and never receives or stores a copy.</li>
+    <li><strong>Scope.</strong> SessionPort uses the <code>drive.file</code> scope, which grants access only to files this extension creates — never to the rest of your Drive. It also reads your account email (<code>userinfo.email</code>) to label the connection.</li>
+    <li><strong>Control.</strong> You can disconnect at any time in Settings; this revokes the access token. You may also remove access at <a href="https://myaccount.google.com/permissions">myaccount.google.com/permissions</a> and delete the files from your Drive.</li>
+    <li><strong>Google's handling</strong> of data stored in your Drive is governed by Google's Privacy Policy. SessionPort's use of Google user data complies with the Google API Services User Data Policy, including the Limited Use requirements.</li>
+  </ul>
 
   <h2>Permissions</h2>
   <p>SessionPort requests the following Chrome permissions:</p>
@@ -54,7 +63,9 @@
     <li><strong>sidePanel</strong> — displays the SessionPort interface as a side panel alongside your AI chat</li>
     <li><strong>tabs</strong> — reads the current tab URL to detect the AI platform and synchronize state</li>
     <li><strong>alarms</strong> — schedules reliable background polling so capture works even if the service worker would otherwise sleep</li>
+    <li><strong>identity</strong> — used only if you connect Google Drive: obtains an OAuth token for your Google account so snapshots can sync to your own Drive</li>
     <li><strong>host permissions</strong> (chatgpt.com, claude.ai, grok.com, gemini.google.com, perplexity.ai, chat.mistral.ai, chat.deepseek.com) — required to run the content script on each supported platform to capture responses and inject context into their text editors</li>
+    <li><strong>googleapis.com / oauth2.googleapis.com</strong> — used only when Google Drive sync is enabled, to read/write your snapshot files in your own Drive</li>
   </ul>
 
   <h2>Third parties</h2>

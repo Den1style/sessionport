@@ -27,7 +27,8 @@ FEATURES:
 • Visual mind map — see snapshot relationships and session branches as an interactive SVG tree
 • File attachments — link files to snapshots and re-inject them automatically on transfer
 • Backup & restore — export all snapshots as JSON; import them back on any device
-• Offline-first — all data stored locally in your browser's IndexedDB, no servers, no account required
+• Cross-device sync (optional) — connect Google Drive to keep snapshots in sync across your browsers; data lives in YOUR own Drive (drive.file scope), SessionPort runs no servers
+• Offline-first — works fully offline; all data stored locally in your browser's IndexedDB, no account required unless you opt in to Drive sync
 • 9 languages — English, Русский, Deutsch, Français, Español, Português, 日本語, 한국어, 中文
 • Light and dark themes
 
@@ -66,7 +67,16 @@ alarms
   continues reliably even if the Manifest V3 service worker is suspended by Chrome.
   Without alarms, long captures (> 30s) may miss the model's response.
 
+identity
+  Used ONLY when the user explicitly connects Google Drive (optional sync feature).
+  Obtains an OAuth token via chrome.identity to read/write the user's own snapshot
+  files in their Google Drive. Not used unless the user opts in.
+
 host_permissions:
+  https://www.googleapis.com/, https://oauth2.googleapis.com/
+    — Google Drive sync (optional). Used only after the user connects Google Drive,
+      to upload/download their snapshot file (drive.file scope = only files this
+      extension creates) and to read their account email for the connection label.
   https://chatgpt.com/*       — content script: capture ChatGPT responses, inject into ChatGPT editor
   https://claude.ai/*         — content script: capture Claude responses, inject into Claude editor
   https://grok.com/*          — content script: capture Grok responses, inject into Grok editor

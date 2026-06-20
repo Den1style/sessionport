@@ -220,6 +220,7 @@ async function saveSnapshot(payload, source_host) {
   const snapshot = {
     snapshot_id,
     created_at:   now,
+    state_at:     now,   // bumped on soft-delete/restore; drives sync last-write-wins
     source_host,
     target_host:  null,
     project,
@@ -772,6 +773,7 @@ async function softDelete(id) {
   const s = await getSnapshot(id);
   if (!s) return false;
   s.deleted_at = new Date().toISOString();
+  s.state_at   = s.deleted_at;            // sync: deletion timestamp wins over older active state
   return wrap(tx('snapshots', 'readwrite').put(s));
 }
 
@@ -780,6 +782,7 @@ async function restoreSnapshot(id) {
   const s = await getSnapshot(id);
   if (!s) return false;
   s.deleted_at = null;
+  s.state_at   = new Date().toISOString(); // sync: restore timestamp wins over older deletion
   return wrap(tx('snapshots', 'readwrite').put(s));
 }
 
@@ -814,6 +817,78 @@ async function listTrashed({ fields = null } = {}) {
   });
 }
 
+// ─── Sync merge (Drive two-way sync) ─────────────────────
+// Pull a remote canonical export into the local DB. Unlike importAll (which
+// restores anything re-imported), this respects deletions bidirectionally via
+// state_at last-write-wins, so a delete on one device propagates to the other.
+// Caller pushes the merged exportAll() back to the canonical Drive file.
+async function applySyncMerge(jsonStr) {
+  await openDB();
+  const data = JSON.parse(jsonStr);
+  if (data.schema_version !== 1) throw new Error('Unsupported schema_version: ' + data.schema_version);
+
+  const stamp = (s) => s?.state_at || s?.deleted_at || s?.created_at || '';
+
+  // Snapshot lifecycle state of everything we already have locally.
+  const local = new Map(); // snapshot_id -> state_at string
+  await new Promise((resolve, reject) => {
+    const req = tx('snapshots').openCursor();
+    req.onsuccess = (e) => {
+      const c = e.target.result;
+      if (!c) { resolve(); return; }
+      local.set(c.key, stamp(c.value));
+      c.continue();
+    };
+    req.onerror = (e) => reject(e.target.error);
+  });
+
+  const incoming = (data.snapshots || []).filter(s => s?.snapshot_id);
+  const toAdd    = [];   // absent locally
+  const toUpdate = [];   // present, but remote lifecycle state is newer (delete/restore propagation)
+  for (const r of incoming) {
+    if (!local.has(r.snapshot_id)) { toAdd.push(r); continue; }
+    if (stamp(r) > local.get(r.snapshot_id)) toUpdate.push(r);
+  }
+
+  // Add any file blobs/junctions we don't already have (same dedup as importAll).
+  const allIds = new Set(incoming.map(s => s.snapshot_id));
+  const existingFileKeys = new Set();
+  for (const snapId of allIds) {
+    const existing = await new Promise((res, rej) => {
+      const rq = tx('snapshot_files').index('by_snapshot').getAll(snapId);
+      rq.onsuccess = e => res(e.target.result); rq.onerror = e => rej(e.target.error);
+    });
+    for (const f of existing) existingFileKeys.add(snapId + ':' + f.hash);
+  }
+  const filesToImport = (data.snapshot_files || []).filter(f =>
+    allIds.has(f.snapshot_id) && !existingFileKeys.has(f.snapshot_id + ':' + f.hash));
+  const hashes = new Set(filesToImport.map(f => f.hash));
+  const blobsToImport = (data.blobs || []).filter(b => hashes.has(b.hash));
+
+  if (!toAdd.length && !toUpdate.length && !filesToImport.length && !(data.refs || []).length) {
+    return { added: 0, updated: 0 };
+  }
+
+  const stores = ['snapshots', 'refs'];
+  if (filesToImport.length) stores.push('snapshot_files', 'blobs');
+  await new Promise((resolve, reject) => {
+    const t = _db.transaction(stores, 'readwrite');
+    const snap = t.objectStore('snapshots');
+    for (const s of toAdd)    snap.put(s);
+    for (const s of toUpdate) snap.put(s);   // adopt remote lifecycle state (payload is immutable)
+    for (const r of (data.refs || [])) t.objectStore('refs').put(r);
+    if (filesToImport.length) {
+      for (const b of blobsToImport) t.objectStore('blobs').put(b);
+      for (const f of filesToImport) { const { id: _id, ...rest } = f; t.objectStore('snapshot_files').add(rest); }
+    }
+    t.oncomplete = () => resolve();
+    t.onerror    = e => reject(e.target.error);
+    t.onabort    = () => reject(new Error('Sync merge aborted'));
+  });
+
+  return { added: toAdd.length, updated: toUpdate.length };
+}
+
 // ─── Unified Export ──────────────────────────────────────
 // FIX: single export block — no more patching after init
 
@@ -822,7 +897,7 @@ const SessionPortDB_obj = {
   getByTransferId, getChainByTransferId,
   diff, setActive, getActive, fork, markInjected,
   softDelete, restoreSnapshot, permanentDelete, listTrashed,
-  exportAll, exportSelected, importAll, migrateFromFlowState, renameProject,
+  exportAll, exportSelected, importAll, applySyncMerge, migrateFromFlowState, renameProject,
   attachFile, getSnapshotFiles, getFileByJunction, detachFile, gcBlobs,
   bufferToBase64, base64ToBytes,
   openDB,

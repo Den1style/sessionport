@@ -52,8 +52,8 @@ function initSettingsScreen() {
     _applyHideTest(!!r.pr_hide_test);
   });
 
-  // Sync Google Drive state
-  if (typeof gdrive_getState === 'function') _gdRefreshUI();
+  // Sync Google Drive state, then auto-sync the canonical file in the background
+  if (typeof gdrive_getState === 'function') { _gdRefreshUI(); _gdAutoSync(); }
 }
 
 function _syncLangDropLabel(lang) {
@@ -510,12 +510,38 @@ async function _gdRefreshUI() {
   }
 }
 
+// Auto-sync the canonical Drive file when the popup opens (if connected and not
+// synced in the last minute). Pull → merge → push. Silent: never blocks the UI
+// or alerts on transient failure; retries on the next open.
+let _gdSyncing = false;
+async function _gdAutoSync() {
+  if (_gdSyncing || typeof gdrive_syncNow !== 'function') return;
+  const st = await gdrive_getState();
+  if (!st.connected) return;
+  const { gd_last_sync } = await new Promise(r => chrome.storage.local.get('gd_last_sync', r));
+  if (gd_last_sync && Date.now() - gd_last_sync < 60_000) return;
+  _gdSyncing = true;
+  try {
+    const res = await gdrive_syncNow();
+    if (res.pulled && (res.pulled.added || res.pulled.updated)) {
+      chrome.storage.local.set({ snapshot_added_at: Date.now() }); // nudge history view to refresh
+    }
+    await _gdRefreshUI();
+  } catch (e) {
+    if (e.message === 'AUTH_EXPIRED') { await gdrive_disconnect(); await _gdRefreshUI(); }
+    else console.warn('[SessionPort] auto-sync failed:', e); // visible, non-fatal; retries next open
+  } finally {
+    _gdSyncing = false;
+  }
+}
+
 document.getElementById('btnGdSignIn')?.addEventListener('click', async () => {
   const btn = document.getElementById('btnGdSignIn');
   if (btn) { btn.disabled = true; btn.textContent = PR_i18n.t('sett.gd_connecting'); }
   try {
     await gdrive_connect();
     await _gdRefreshUI();
+    _gdAutoSync(); // initial pull/push right after connecting
     showToast && showToast(PR_i18n.t('sett.gd_connected'), 'success');
   } catch (e) {
     if (e.message === 'SETUP_REQUIRED') {

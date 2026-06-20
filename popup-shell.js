@@ -284,14 +284,16 @@ O que você parou de sugerir nesta sessão porque o usuário rejeitou silenciosa
   // Step 2 (Simple): generate v1.1 JSON with decisions[{what,why,type}] + instructions[] + validation{expected}.
   SIMPLE_CONFIRM: (transfer_id, parent_transfer_id) => {
     const L = _lang();
-    const _json_en = `{"meta":{"protocol":"SessionPort","transfer_id":"${transfer_id}","project":"…","version":"1.1","date":"YYYY-MM-DD"${parent_transfer_id ? `,"parent_transfer_id":"${parent_transfer_id}"` : ''}},"dna":{"goal":"continuation instruction (verb+task+priority)","language":"en","style":"…","constraints":["…"],"trajectory":"where the project is heading — next major step or goal"},"decisions":[{"what":"…","why":"reason","context":"under what circumstances","type":"accepted"},{"what":"…","why":"reason","context":"what was tried and refused","type":"rejected"},{"what":"…","why":"reason","context":"","type":"rule"}],"state":{"current_task":"…","last_actions":["…","…","…"],"next_step":"…","artifacts":["file/function/concept"]},"instructions":["If X → Y","Always Z when W","Never Q — because R"],"validation":{"questions":["?","?","?"],"expected":["criterion 1","criterion 2","criterion 3"]}}`;
-    const _json_ru = `{"meta":{"protocol":"SessionPort","transfer_id":"${transfer_id}","project":"…","version":"1.1","date":"YYYY-MM-DD"${parent_transfer_id ? `,"parent_transfer_id":"${parent_transfer_id}"` : ''}},"dna":{"goal":"инструкция-продолжение (глагол+задача+приоритет)","language":"ru","style":"…","constraints":["…"],"trajectory":"куда движется проект — следующий крупный шаг или цель"},"decisions":[{"what":"…","why":"причина","context":"при каких обстоятельствах","type":"accepted"},{"what":"…","why":"причина","context":"что пробовали и явно отвергли","type":"rejected"},{"what":"…","why":"причина","context":"","type":"rule"}],"state":{"current_task":"…","last_actions":["…","…","…"],"next_step":"…","artifacts":["файл/функция/концепт"]},"instructions":["Если X → Y","Всегда Z при W","Никогда Q — потому что R"],"validation":{"questions":["?","?","?"],"expected":["критерий 1","критерий 2","критерий 3"]}}`;
+    // Inject today's real date so the model copies it instead of hallucinating one.
+    const _today = new Date().toISOString().slice(0, 10);
+    const _json_en = `{"meta":{"protocol":"SessionPort","transfer_id":"${transfer_id}","project":"…","version":"1.1","date":"${_today}"${parent_transfer_id ? `,"parent_transfer_id":"${parent_transfer_id}"` : ''}},"dna":{"goal":"continuation instruction (verb+task+priority)","language":"en","style":"…","constraints":["…"],"trajectory":"where the project is heading — next major step or goal"},"decisions":[{"what":"…","why":"reason","context":"under what circumstances","type":"accepted"},{"what":"…","why":"reason","context":"what was tried and refused","type":"rejected"},{"what":"…","why":"reason","context":"","type":"rule"}],"state":{"current_task":"…","last_actions":["…","…","…"],"next_step":"…","artifacts":["file/function/concept"]},"instructions":["If X → Y","Always Z when W","Never Q — because R"],"open_threads":["genuinely unresolved question or branch we left open — why it matters"],"validation":{"questions":["?","?","?"],"expected":["criterion 1","criterion 2","criterion 3"]}}`;
+    const _json_ru = `{"meta":{"protocol":"SessionPort","transfer_id":"${transfer_id}","project":"…","version":"1.1","date":"${_today}"${parent_transfer_id ? `,"parent_transfer_id":"${parent_transfer_id}"` : ''}},"dna":{"goal":"инструкция-продолжение (глагол+задача+приоритет)","language":"ru","style":"…","constraints":["…"],"trajectory":"куда движется проект — следующий крупный шаг или цель"},"decisions":[{"what":"…","why":"причина","context":"при каких обстоятельствах","type":"accepted"},{"what":"…","why":"причина","context":"что пробовали и явно отвергли","type":"rejected"},{"what":"…","why":"причина","context":"","type":"rule"}],"state":{"current_task":"…","last_actions":["…","…","…"],"next_step":"…","artifacts":["файл/функция/концепт"]},"instructions":["Если X → Y","Всегда Z при W","Никогда Q — потому что R"],"open_threads":["реально нерешённый вопрос или ветка, которую оставили открытой — почему это важно"],"validation":{"questions":["?","?","?"],"expected":["критерий 1","критерий 2","критерий 3"]}}`;
     const _tid = `meta.transfer_id = "${transfer_id}" character-for-character.${parent_transfer_id ? `\nmeta.parent_transfer_id = "${parent_transfer_id}" character-for-character.` : ''}`;
     const _tid_ru = `meta.transfer_id = "${transfer_id}" символ-в-символ.${parent_transfer_id ? `\nmeta.parent_transfer_id = "${parent_transfer_id}" символ-в-символ.` : ''}`;
 
     if (L === 'en') return `SessionPort PROTOCOL — SNAPSHOT GENERATION.
 
-Analyze our conversation in this chat and generate a JSON snapshot. Fill in real data from our dialogue instead of "…". The transfer_id below is a unique label — do NOT look it up anywhere, just copy it into meta.transfer_id as-is:
+Convert the structured breakdown you produced in the previous step into a JSON snapshot — one-to-one, do NOT re-analyze the conversation from scratch or add items the user has not already seen. Fill in real data from our dialogue instead of "…". The transfer_id below is a unique label — do NOT look it up anywhere, just copy it into meta.transfer_id as-is:
 
 \`\`\`json
 ${_json_en}
@@ -300,13 +302,14 @@ ${_json_en}
 or ---BEGIN CONTEXT---{…}---END CONTEXT---
 
 CRITICAL: All data comes from our conversation above — no external sources needed.
-decisions — minimum 3. Include ALL real type:"rejected" entries (what was tried and explicitly refused). Do NOT invent rejections — if there were none, omit them. Each must have a non-empty "why".
+decisions — minimum 3. Include ALL real type:"rejected" entries (what was tried and explicitly refused). Do NOT invent rejections — if there were none, the array may be empty. Each must have a non-empty "why".
+validation.questions — make them probe real decisions and rejected items, so a wrong or partial restore yields a visibly wrong answer; do NOT ask trivia that can be copied straight from dna.goal.
 ${_tid}
 First character {. Last character }. JSON only, no explanation.`;
 
     const _intro_ru = `ПРОТОКОЛ SessionPort — ГЕНЕРАЦИЯ СЛЕПКА.
 
-Проанализируй нашу переписку в этом чате и сформируй JSON-слепок. Подставь реальные данные из нашего диалога вместо «…». transfer_id ниже — уникальная метка, не ищи её нигде — просто скопируй в meta.transfer_id как есть:
+Преобразуй структурный разбор, который ты выдал на предыдущем шаге, в JSON-слепок — один-в-один, не анализируй переписку заново и не добавляй пункты, которых пользователь ещё не видел. Подставь реальные данные из нашего диалога вместо «…». transfer_id ниже — уникальная метка, не ищи её нигде — просто скопируй в meta.transfer_id как есть:
 
 \`\`\`json
 ${_json_ru}
@@ -314,13 +317,14 @@ ${_json_ru}
 
 или ---BEGIN CONTEXT---{…}---END CONTEXT---`;
     const _crit_ru = `КРИТИЧНО: Все данные — из нашей переписки выше.
-decisions — минимум 3, из них ≥2 type:"rejected" (что пробовали и явно отвергли — критично для непрерывности контекста). Каждое с непустым "why".
+decisions — минимум 3. Включи ВСЕ реальные type:"rejected" (что пробовали и явно отвергли). НЕ выдумывай отклонения — если их не было, массив может быть пустым. Каждое с непустым "why".
+validation.questions — формулируй так, чтобы они проверяли реальные решения и отклонённые варианты: при неверном или неполном восстановлении ответ будет заметно ошибочным. Не спрашивай то, что тривиально копируется из dna.goal.
 ${_tid_ru}
 Первый символ {. Последний }. Только JSON, без пояснений.`;
 
     if (L === 'de') return `SessionPort PROTOKOLL — SNAPSHOT-GENERIERUNG.
 
-Analysiere unser Gespräch in diesem Chat und erstelle einen JSON-Snapshot. Ersetze "…" durch echte Daten aus unserem Dialog. Die transfer_id ist eine eindeutige Kennung — suche sie nicht, kopiere sie einfach als meta.transfer_id:
+Wandle die strukturierte Aufschlüsselung aus dem vorherigen Schritt eins-zu-eins in einen JSON-Snapshot um — analysiere das Gespräch nicht neu und füge keine Punkte hinzu, die der Nutzer noch nicht gesehen hat. Ersetze "…" durch echte Daten aus unserem Dialog. Die transfer_id ist eine eindeutige Kennung — suche sie nicht, kopiere sie einfach als meta.transfer_id:
 
 \`\`\`json
 ${_json_en.replace('"language":"en"','"language":"de"').replace('"goal":"continuation instruction (verb+task+priority)"','"goal":"Fortsetzungs-Instruktion (Verb+Aufgabe+Priorität)"')}
@@ -329,13 +333,14 @@ ${_json_en.replace('"language":"en"','"language":"de"').replace('"goal":"continu
 oder ---BEGIN CONTEXT---{…}---END CONTEXT---
 
 KRITISCH: Alle Daten kommen aus unserem Gespräch oben.
-decisions — mindestens 3, davon ≥2 type:"rejected" (was versucht und ausdrücklich abgelehnt wurde — kritisch für Kontextkontinuität). Jedes mit nicht leerem "why".
+decisions — mindestens 3. Erfasse ALLE realen type:"rejected" (was versucht und ausdrücklich abgelehnt wurde). Erfinde KEINE Ablehnungen — gab es keine, darf das Array leer sein. Jedes mit nicht leerem "why".
+validation.questions — so formulieren, dass sie echte Entscheidungen und abgelehnte Punkte prüfen: bei falscher oder unvollständiger Wiederherstellung wird die Antwort sichtbar falsch. Frage nichts ab, was sich direkt aus dna.goal kopieren lässt.
 ${_tid}
 Erstes Zeichen {. Letztes Zeichen }. Nur JSON, keine Erklärung.`;
 
     if (L === 'fr') return `PROTOCOLE SessionPort — GÉNÉRATION DU SNAPSHOT.
 
-Analyse notre conversation dans ce chat et génère un snapshot JSON. Remplace "…" par des données réelles de notre dialogue. Le transfer_id est un label unique — ne le cherche pas, copie-le simplement dans meta.transfer_id tel quel :
+Convertis la décomposition structurée que tu as produite à l'étape précédente en snapshot JSON — un pour un, ne ré-analyse pas la conversation et n'ajoute pas d'éléments que l'utilisateur n'a pas déjà vus. Remplace "…" par des données réelles de notre dialogue. Le transfer_id est un label unique — ne le cherche pas, copie-le simplement dans meta.transfer_id tel quel :
 
 \`\`\`json
 ${_json_en.replace('"language":"en"','"language":"fr"').replace('"goal":"continuation instruction (verb+task+priority)"','"goal":"instruction de continuation (verbe+tâche+priorité)"')}
@@ -344,13 +349,14 @@ ${_json_en.replace('"language":"en"','"language":"fr"').replace('"goal":"continu
 ou ---BEGIN CONTEXT---{…}---END CONTEXT---
 
 CRITIQUE : Toutes les données viennent de notre conversation ci-dessus.
-decisions — minimum 3, dont ≥2 type:"rejected" (ce qui a été essayé et explicitement refusé — critique pour la continuité du contexte). Chacun avec un "why" non vide.
+decisions — minimum 3. Inclus TOUS les type:"rejected" réels (ce qui a été essayé et explicitement refusé). N'invente PAS de rejets — s'il n'y en a eu aucun, le tableau peut être vide. Chacun avec un "why" non vide.
+validation.questions — formule-les pour qu'elles testent de vraies décisions et des éléments rejetés : une restauration erronée ou partielle donnera une réponse visiblement fausse. Ne demande rien qui se copie directement depuis dna.goal.
 ${_tid}
 Premier caractère {. Dernier caractère }. JSON uniquement, sans explication.`;
 
     if (L === 'es') return `PROTOCOLO SessionPort — GENERACIÓN DEL SNAPSHOT.
 
-Analiza nuestra conversación en este chat y genera un snapshot JSON. Reemplaza "…" con datos reales de nuestro diálogo. El transfer_id es una etiqueta única — no lo busques, simplemente cópialo en meta.transfer_id tal cual:
+Convierte el desglose estructurado que produjiste en el paso anterior en un snapshot JSON — uno a uno, no vuelvas a analizar la conversación ni añadas elementos que el usuario no haya visto ya. Reemplaza "…" con datos reales de nuestro diálogo. El transfer_id es una etiqueta única — no lo busques, simplemente cópialo en meta.transfer_id tal cual:
 
 \`\`\`json
 ${_json_en.replace('"language":"en"','"language":"es"').replace('"goal":"continuation instruction (verb+task+priority)"','"goal":"instrucción de continuación (verbo+tarea+prioridad)"')}
@@ -359,13 +365,14 @@ ${_json_en.replace('"language":"en"','"language":"es"').replace('"goal":"continu
 o ---BEGIN CONTEXT---{…}---END CONTEXT---
 
 CRÍTICO: Todos los datos provienen de nuestra conversación anterior.
-decisions — mínimo 3, incluyendo ≥2 type:"rejected" (lo que se intentó y fue rechazado explícitamente — crítico para la continuidad del contexto). Cada uno con un "why" no vacío.
+decisions — mínimo 3. Incluye TODOS los type:"rejected" reales (lo que se intentó y fue rechazado explícitamente). NO inventes rechazos — si no hubo ninguno, el arreglo puede quedar vacío. Cada uno con un "why" no vacío.
+validation.questions — formúlalas para que pongan a prueba decisiones reales y elementos rechazados: una restauración errónea o parcial dará una respuesta visiblemente incorrecta. No preguntes nada que se copie directamente de dna.goal.
 ${_tid}
 Primer carácter {. Último carácter }. Solo JSON, sin explicación.`;
 
     if (L === 'zh') return `SessionPort 协议 — 快照生成。
 
-分析我们在此聊天中的对话并生成JSON快照。将"…"替换为对话中的真实数据。transfer_id是唯一标识符——不要查找它，直接复制到meta.transfer_id中：
+将你在上一步生成的结构化分解一对一转换为JSON快照——不要重新分析对话，也不要添加用户尚未看到的条目。将"…"替换为对话中的真实数据。transfer_id是唯一标识符——不要查找它，直接复制到meta.transfer_id中：
 
 \`\`\`json
 ${_json_en.replace('"language":"en"','"language":"zh"').replace('"goal":"continuation instruction (verb+task+priority)"','"goal":"继续指令（动词+任务+优先级）"')}
@@ -374,13 +381,14 @@ ${_json_en.replace('"language":"en"','"language":"zh"').replace('"goal":"continu
 或 ---BEGIN CONTEXT---{…}---END CONTEXT---
 
 关键：所有数据来自上面的对话——不需要外部来源。
-decisions — 最少3条，其中≥2条type:"rejected"（什么被尝试并被明确拒绝——对上下文连续性至关重要）。每条必须有非空的"why"。
+decisions — 最少3条。包含所有真实的type:"rejected"（什么被尝试并被明确拒绝）。不要编造拒绝——如果没有，数组可以为空。每条必须有非空的"why"。
+validation.questions — 设计成检验真实决策和被拒绝项：当恢复错误或不完整时答案会明显出错。不要问可以直接从dna.goal复制的内容。
 ${_tid}
 第一个字符{。最后一个字符}。仅JSON，无说明。`;
 
     if (L === 'ja') return `SessionPort プロトコル — スナップショット生成。
 
-このチャットの会話を分析してJSONスナップショットを生成してください。「…」を対話からの実際のデータに置き換えてください。transfer_idは一意のラベルです — 検索せず、meta.transfer_idにそのままコピーしてください：
+前のステップで作成した構造化された分解を一対一でJSONスナップショットに変換してください — 会話を再分析したり、ユーザーがまだ見ていない項目を追加したりしないでください。「…」を対話からの実際のデータに置き換えてください。transfer_idは一意のラベルです — 検索せず、meta.transfer_idにそのままコピーしてください：
 
 \`\`\`json
 ${_json_en.replace('"language":"en"','"language":"ja"').replace('"goal":"continuation instruction (verb+task+priority)"','"goal":"継続指示（動詞+タスク+優先度）"')}
@@ -389,13 +397,14 @@ ${_json_en.replace('"language":"en"','"language":"ja"').replace('"goal":"continu
 または ---BEGIN CONTEXT---{…}---END CONTEXT---
 
 重要：すべてのデータは上の会話から来ています。
-decisions — 最低3つ、うち≥2つはtype:"rejected"（試みられ明示的に拒否されたもの — コンテキスト継続性にとって重要）。各々に空でない"why"が必要です。
+decisions — 最低3つ。実際のtype:"rejected"をすべて含めてください（試みられ明示的に拒否されたもの）。拒否を作り上げないでください — なかった場合は配列が空でも構いません。各々に空でない"why"が必要です。
+validation.questions — 実際の決定と拒否された項目を検証するように作ってください：復元が誤っている、または不完全な場合に答えが明らかに間違って出るように。dna.goalからそのままコピーできるようなことは尋ねないでください。
 ${_tid}
 最初の文字{。最後の文字}。JSONのみ、説明なし。`;
 
     if (L === 'ko') return `SessionPort 프로토콜 — 스냅샷 생성.
 
-이 채팅의 대화를 분석하고 JSON 스냅샷을 생성하세요. "…"를 대화의 실제 데이터로 교체하세요. transfer_id는 고유 레이블입니다 — 검색하지 말고 meta.transfer_id에 그대로 복사하세요:
+이전 단계에서 작성한 구조화된 분석을 일대일로 JSON 스냅샷으로 변환하세요 — 대화를 다시 분석하거나 사용자가 아직 보지 못한 항목을 추가하지 마세요. "…"를 대화의 실제 데이터로 교체하세요. transfer_id는 고유 레이블입니다 — 검색하지 말고 meta.transfer_id에 그대로 복사하세요:
 
 \`\`\`json
 ${_json_en.replace('"language":"en"','"language":"ko"').replace('"goal":"continuation instruction (verb+task+priority)"','"goal":"계속 지시 (동사+작업+우선순위)"')}
@@ -404,13 +413,14 @@ ${_json_en.replace('"language":"en"','"language":"ko"').replace('"goal":"continu
 또는 ---BEGIN CONTEXT---{…}---END CONTEXT---
 
 중요: 모든 데이터는 위의 대화에서 가져옵니다.
-decisions — 최소 3개, 그 중 ≥2개는 type:"rejected" (시도되었고 명시적으로 거부된 것 — 컨텍스트 연속성에 매우 중요). 각각 비어 있지 않은 "why"가 필요합니다.
+decisions — 최소 3개. 실제 type:"rejected"를 모두 포함하세요 (시도되었고 명시적으로 거부된 것). 거부를 지어내지 마세요 — 없었다면 배열이 비어 있어도 됩니다. 각각 비어 있지 않은 "why"가 필요합니다.
+validation.questions — 실제 결정과 거부된 항목을 검증하도록 만드세요: 복원이 틀리거나 불완전하면 답이 눈에 띄게 잘못 나오도록. dna.goal에서 그대로 복사할 수 있는 것은 묻지 마세요.
 ${_tid}
 첫 번째 문자 {. 마지막 문자 }. JSON만, 설명 없음.`;
 
     if (L === 'pt') return `PROTOCOLO SessionPort — GERAÇÃO DO SNAPSHOT.
 
-Analise nossa conversa neste chat e gere um snapshot JSON. Substitua "…" por dados reais do nosso diálogo. O transfer_id é um rótulo único — não o procure, apenas copie-o para meta.transfer_id como está:
+Converta a decomposição estruturada que você produziu na etapa anterior em um snapshot JSON — um para um, não reanalise a conversa nem adicione itens que o usuário ainda não viu. Substitua "…" por dados reais do nosso diálogo. O transfer_id é um rótulo único — não o procure, apenas copie-o para meta.transfer_id como está:
 
 \`\`\`json
 ${_json_en.replace('"language":"en"','"language":"pt"').replace('"goal":"continuation instruction (verb+task+priority)"','"goal":"instrução de continuação (verbo+tarefa+prioridade)"')}
@@ -419,7 +429,8 @@ ${_json_en.replace('"language":"en"','"language":"pt"').replace('"goal":"continu
 ou ---BEGIN CONTEXT---{…}---END CONTEXT---
 
 CRÍTICO: Todos os dados vêm da nossa conversa acima.
-decisions — mínimo 3, incluindo ≥2 type:"rejected" (o que foi tentado e explicitamente recusado — crítico para a continuidade do contexto). Cada um com um "why" não vazio.
+decisions — mínimo 3. Inclua TODOS os type:"rejected" reais (o que foi tentado e explicitamente recusado). NÃO invente rejeições — se não houve nenhuma, o array pode ficar vazio. Cada um com um "why" não vazio.
+validation.questions — formule-as para testar decisões reais e itens rejeitados: uma restauração errada ou parcial dará uma resposta visivelmente incorreta. Não pergunte nada que se copie diretamente de dna.goal.
 ${_tid}
 Primeiro caractere {. Último caractere }. Apenas JSON, sem explicação.`;
 
@@ -786,9 +797,11 @@ Vou revisar cada camada e dizer o que mudar. Se tudo estiver correto — prosseg
   // Step 3 (Extended): full v1.1 JSON with implicit section.
   EXTENDED_TRANSFER: (transfer_id, parent_transfer_id) => {
     const L = _lang();
+    // Inject today's real date so the model copies it instead of hallucinating one.
+    const _today = new Date().toISOString().slice(0, 10);
     const _ptid = parent_transfer_id ? `,"parent_transfer_id":"${parent_transfer_id}"` : '';
-    const _json_en = `{"meta":{"protocol":"SessionPort","transfer_id":"${transfer_id}","project":"…","version":"1.1","date":"YYYY-MM-DD"${_ptid}},"dna":{"goal":"continuation instruction","language":"en","style":"…","constraints":["…"],"trajectory":"next major step/goal of the project"},"decisions":[{"what":"…","why":"reason — what was tried and explicitly refused","type":"rejected"},{"what":"…","why":"reason","type":"rule"},{"what":"…","why":"reason","type":"accepted"}],"state":{"current_task":"…","last_actions":["…","…","…"],"next_step":"…","artifacts":["…"]},"instructions":["If X → Y","Always Z when W","Never Q — because R"],"implicit":{"user_profile":{"expertise":"expert/confident/beginner","style":"…","priorities":["…"],"profile_confidence":"high/medium/low — based on N messages"},"adaptation_log":["Stopped suggesting X after message N — user never accepted it","Reduced detail level — user replied briefly"],"blind_spots":["Which question, had I asked it, would have changed my decision about X?"],"assumptions":[{"what":"…","confidence":"high/medium/low"}]},"validation":{"questions":["?","?","?"],"expected":["criterion 1","criterion 2","criterion 3"]}}`;
-    const _json_ru = `{"meta":{"protocol":"SessionPort","transfer_id":"${transfer_id}","project":"…","version":"1.1","date":"YYYY-MM-DD"${_ptid}},"dna":{"goal":"инструкция-продолжение","language":"ru","style":"…","constraints":["…"],"trajectory":"следующий крупный шаг/цель проекта"},"decisions":[{"what":"…","why":"причина — что пробовали и явно отвергли","type":"rejected"},{"what":"…","why":"причина","type":"rule"},{"what":"…","why":"причина","type":"accepted"}],"state":{"current_task":"…","last_actions":["…","…","…"],"next_step":"…","artifacts":["…"]},"instructions":["Если X → Y","Всегда Z при W","Никогда Q — потому что R"],"implicit":{"user_profile":{"expertise":"эксперт/уверенный/новичок","style":"…","priorities":["…"],"profile_confidence":"high/medium/low — основано на N сообщениях"},"adaptation_log":["Перестал предлагать X после сообщения N — пользователь ни разу не принял","Сократил детальность — пользователь отвечал коротко"],"blind_spots":["Какой вопрос, если бы я его задал, изменил бы моё решение по X?"],"assumptions":[{"what":"…","confidence":"high/medium/low"}]},"validation":{"questions":["?","?","?"],"expected":["критерий 1","критерий 2","критерий 3"]}}`;
+    const _json_en = `{"meta":{"protocol":"SessionPort","transfer_id":"${transfer_id}","project":"…","version":"1.1","date":"${_today}"${_ptid}},"dna":{"goal":"continuation instruction","language":"en","style":"…","constraints":["…"],"trajectory":"next major step/goal of the project"},"decisions":[{"what":"…","why":"reason — what was tried and explicitly refused","type":"rejected"},{"what":"…","why":"reason","type":"rule"},{"what":"…","why":"reason","type":"accepted"}],"state":{"current_task":"…","last_actions":["…","…","…"],"next_step":"…","artifacts":["…"]},"instructions":["If X → Y","Always Z when W","Never Q — because R"],"open_threads":["genuinely unresolved question or branch we left open — why it matters"],"implicit":{"user_profile":{"expertise":"expert/confident/beginner","style":"…","priorities":["…"],"profile_confidence":"high/medium/low — based on N messages"},"adaptation_log":["Stopped suggesting X after message N — user never accepted it","Reduced detail level — user replied briefly"],"blind_spots":["Which question, had I asked it, would have changed my decision about X?"],"assumptions":[{"what":"…","confidence":"high/medium/low"}]},"validation":{"questions":["?","?","?"],"expected":["criterion 1","criterion 2","criterion 3"]}}`;
+    const _json_ru = `{"meta":{"protocol":"SessionPort","transfer_id":"${transfer_id}","project":"…","version":"1.1","date":"${_today}"${_ptid}},"dna":{"goal":"инструкция-продолжение","language":"ru","style":"…","constraints":["…"],"trajectory":"следующий крупный шаг/цель проекта"},"decisions":[{"what":"…","why":"причина — что пробовали и явно отвергли","type":"rejected"},{"what":"…","why":"причина","type":"rule"},{"what":"…","why":"причина","type":"accepted"}],"state":{"current_task":"…","last_actions":["…","…","…"],"next_step":"…","artifacts":["…"]},"instructions":["Если X → Y","Всегда Z при W","Никогда Q — потому что R"],"open_threads":["реально нерешённый вопрос или ветка, которую оставили открытой — почему это важно"],"implicit":{"user_profile":{"expertise":"эксперт/уверенный/новичок","style":"…","priorities":["…"],"profile_confidence":"high/medium/low — основано на N сообщениях"},"adaptation_log":["Перестал предлагать X после сообщения N — пользователь ни разу не принял","Сократил детальность — пользователь отвечал коротко"],"blind_spots":["Какой вопрос, если бы я его задал, изменил бы моё решение по X?"],"assumptions":[{"what":"…","confidence":"high/medium/low"}]},"validation":{"questions":["?","?","?"],"expected":["критерий 1","критерий 2","критерий 3"]}}`;
     const _tid_en = `meta.transfer_id = "${transfer_id}" character-for-character.${parent_transfer_id ? `\nmeta.parent_transfer_id = "${parent_transfer_id}" character-for-character.` : ''}`;
     const _tid_ru = `meta.transfer_id = "${transfer_id}" символ-в-символ.${parent_transfer_id ? `\nmeta.parent_transfer_id = "${parent_transfer_id}" символ-в-символ.` : ''}`;
 
@@ -800,7 +813,8 @@ ${_json_en}
 
 or ---BEGIN CONTEXT---{…}---END CONTEXT---
 
-CRITICAL: decisions — include ALL real type:"rejected" (what was tried and explicitly refused). Do NOT invent rejections. Each with non-empty "why". implicit.adaptation_log — real behavior changes only.
+CRITICAL: decisions — include ALL real type:"rejected" (what was tried and explicitly refused). Do NOT invent rejections — if there were none, the array may be empty. Each with non-empty "why". implicit.adaptation_log — real behavior changes only.
+validation.questions — make them probe real decisions and rejected items, so a wrong or partial restore yields a visibly wrong answer; do NOT ask trivia copyable straight from dna.goal.
 ${_tid_en}
 First character {. Last character }. JSON only.`;
 
@@ -847,7 +861,8 @@ ${_json_ru}
 
 или ---BEGIN CONTEXT---{…}---END CONTEXT---
 
-КРИТИЧНО: decisions — ≥2 type:"rejected" обязательно (что пробовали и явно отвергли). Каждое с непустым "why". implicit.adaptation_log — только реальные изменения поведения.
+КРИТИЧНО: decisions — включи ВСЕ реальные type:"rejected" (что пробовали и явно отвергли). НЕ выдумывай отклонения — если их не было, массив может быть пустым. Каждое с непустым "why". implicit.adaptation_log — только реальные изменения поведения.
+validation.questions — формулируй так, чтобы они проверяли реальные решения и отклонённые варианты: при неверном или неполном восстановлении ответ будет заметно ошибочным. Не спрашивай то, что тривиально копируется из dna.goal.
 ${_tid_ru}
 Первый символ {. Последний }. Только JSON.`;
   }

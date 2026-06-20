@@ -3596,6 +3596,17 @@ const PR_i18n = (() => {
       const val = t(key);
       if (val && val !== key) el.setAttribute('aria-label', val);
     });
+    // Refresh the header Prompts/Transfer toggle — its label is set via JS, not
+    // data-i18n, so it would otherwise keep the previous language until next nav.
+    if (typeof _updatePromptsBtn === 'function') {
+      const visId = ['screenMain','screenHistory','screenMap','screenTrash','screenSettings',
+                     'screenPrompts','screenPromptEdit','screenPromptTrash']
+        .find(id => document.getElementById(id)?.classList.contains('visible'));
+      if (visId) {
+        const n = visId.slice(6); // strip "screen"
+        _updatePromptsBtn(n.charAt(0).toLowerCase() + n.slice(1));
+      }
+    }
     // Re-render dynamic screens if open
     if (typeof renderHistoryScreen === 'function' &&
         document.getElementById('screenHistory')?.classList.contains('visible')) {
