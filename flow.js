@@ -87,6 +87,14 @@ function resetFlowState() {
   hidePastePanel();
   if (typeof updateDropzoneState === 'function') updateDropzoneState(false);
   if (typeof renderFiles === 'function') renderFiles([]);
+
+  // Восстановить секции суммаризации (loadSnapAsActive из истории схлопывает их и
+  // прячет filesSection — без этого "Обновить" оставляет пустой экран без шагов).
+  document.getElementById('filesSection')?.style.removeProperty('display');
+  const _mode = document.getElementById('tabExtended')?.classList.contains('active-ext')
+    ? 'extended' : 'simple';
+  switchTransferMode(_mode);
+
   setStatus(PR_i18n.t('status.reset'), 'working');
 }
 
