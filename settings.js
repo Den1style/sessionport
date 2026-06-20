@@ -477,7 +477,7 @@ document.getElementById('settHideTestToggle')?.addEventListener('click', () => {
 // ─── Google Drive ─────────────────────────────────────────
 
 function _gdFmtDate(ts) {
-  if (!ts) return 'Нет бэкапов';
+  if (!ts) return PR_i18n.t('sett.gd_no_backups');
   const d = new Date(ts);
   return d.toLocaleDateString(PR_i18n.fmtDateLocale(), { day: '2-digit', month: 'short' })
     + ' ' + d.toLocaleTimeString(PR_i18n.fmtDateLocale(), { hour: '2-digit', minute: '2-digit' });
@@ -499,7 +499,8 @@ async function _gdRefreshUI() {
     if (emailEl) emailEl.textContent = state.email || '—';
     if (uidEl)   uidEl.textContent   = state.userId || '';
     if (lastEl)  lastEl.textContent  = state.lastBackup
-      ? 'Последний бэкап: ' + _gdFmtDate(state.lastBackup) : 'Нет бэкапов';
+      ? PR_i18n.t('sett.gd_last_prefix') + _gdFmtDate(state.lastBackup)
+      : PR_i18n.t('sett.gd_no_backups');
     _gdSetInterval(state.interval || 'off', false);
     if (avatarEl && state.email) avatarEl.textContent = state.email[0].toUpperCase();
   } else {
@@ -577,7 +578,7 @@ function _gdSetInterval(val, save) {
   document.querySelectorAll('.gd-int-item').forEach(i => i.classList.toggle('active', i.dataset.val === val));
   if (!save) return;
   gdrive_setInterval(val).then(() => {
-    showToast && showToast(val === 'off' ? 'Автобэкап выключен' : 'Автобэкап: ' + (item?.textContent || val), 'success');
+    showToast && showToast(val === 'off' ? PR_i18n.t('sett.gd_autobackup_off') : PR_i18n.t('sett.gd_autobackup_on') + (item?.textContent || val), 'success');
   }).catch(e => showToast && showToast(PR_i18n.t('sett.gd_err') + e.message, 'error'));
 }
 

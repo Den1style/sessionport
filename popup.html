@@ -1807,9 +1807,9 @@ body.light .pe-drop-zone:hover, body.light .pe-drop-zone.drag-over {
       <p class="gd-intro">Войдите через Google для автобэкапа снапшотов на Drive и синхронизации между браузерами.</p>
       <button id="btnGdSignIn" class="gd-signin-btn">
         <svg width="15" height="15" viewBox="0 0 14 14" fill="none"><path d="M13 7.15c0-.5-.04-1-.12-1.5H7v2.84h3.36c-.15.8-.6 1.47-1.26 1.92v1.6h2.04C12.45 10.9 13 9.16 13 7.15z" fill="#4285f4"/><path d="M7 13c1.68 0 3.09-.55 4.12-1.5L9.08 9.9c-.56.38-1.28.6-2.08.6-1.6 0-2.96-1.08-3.44-2.53H1.48v1.64C2.5 11.44 4.62 13 7 13z" fill="#34a853"/><path d="M3.56 7.97c-.12-.36-.19-.74-.19-1.13 0-.4.07-.78.19-1.14V4.06H1.48A6.04 6.04 0 0 0 1 6.84c0 .97.23 1.88.48 2.77l2.08-1.64z" fill="#fbbc05"/><path d="M7 3.43c.9 0 1.7.31 2.33.92l1.75-1.75C9.93 1.56 8.6 1 7 1A6 6 0 0 0 1.48 4.06l2.08 1.64C4.04 4.51 5.4 3.43 7 3.43z" fill="#ea4335"/></svg>
-        Войти через Google
+        <span data-i18n="sett.auth_google">Войти через Google</span>
       </button>
-      <div id="gdSetupNotice" class="gd-setup-notice" style="display:none">
+      <div id="gdSetupNotice" class="gd-setup-notice" style="display:none" data-i18n="sett.gd_setup_notice">
         ⚠ Для входа нужен OAuth Client ID. Инструкция: Google Cloud Console → APIs &amp; Services → Credentials → Create OAuth Client ID (Chrome Extension) → вставить в manifest.json поле oauth2.client_id.
       </div>
     </div>
@@ -1822,46 +1822,46 @@ body.light .pe-drop-zone:hover, body.light .pe-drop-zone.drag-over {
           <div class="gd-email" id="gdEmailEl">—</div>
           <div class="gd-uid"  id="gdUidEl"></div>
         </div>
-        <button id="btnGdSignOut" class="gd-signout-btn">Выйти</button>
+        <button id="btnGdSignOut" class="gd-signout-btn" data-i18n="sett.gd_signout">Выйти</button>
       </div>
 
-      <div class="gd-section-title">Google Drive бэкап</div>
+      <div class="gd-section-title" data-i18n="sett.gd_section">Google Drive бэкап</div>
 
       <div class="gd-row">
-        <span class="gd-row-label">Автобэкап</span>
+        <span class="gd-row-label" data-i18n="sett.gd_autobackup">Автобэкап</span>
         <div class="gd-int-drop">
           <button id="gdIntervalBtn" class="lang-drop-btn gd-int-btn">
-            <span id="gdIntervalLabel">Выкл</span>
+            <span id="gdIntervalLabel" data-i18n="sett.gd_int_off">Выкл</span>
             <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
           <div id="gdIntervalMenu" class="lang-drop-menu" style="display:none;">
-            <button class="lang-drop-item gd-int-item" data-val="off">Выкл</button>
-            <button class="lang-drop-item gd-int-item" data-val="6h">Каждые 6 ч</button>
-            <button class="lang-drop-item gd-int-item" data-val="24h">Каждые 24 ч</button>
-            <button class="lang-drop-item gd-int-item" data-val="7d">Каждые 7 дней</button>
+            <button class="lang-drop-item gd-int-item" data-val="off" data-i18n="sett.gd_int_off">Выкл</button>
+            <button class="lang-drop-item gd-int-item" data-val="6h" data-i18n="sett.gd_int_6h">Каждые 6 ч</button>
+            <button class="lang-drop-item gd-int-item" data-val="24h" data-i18n="sett.gd_int_24h">Каждые 24 ч</button>
+            <button class="lang-drop-item gd-int-item" data-val="7d" data-i18n="sett.gd_int_7d">Каждые 7 дней</button>
           </div>
         </div>
       </div>
 
       <button id="btnGdBackupNow" class="gd-btn gd-btn-backup">
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v7M3 5l3 3 3-3M1 10h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        Создать бэкап сейчас
+        <span data-i18n="sett.gd_backup_btn">Создать бэкап сейчас</span>
       </button>
       <button id="btnGdRestore" class="gd-btn gd-btn-restore">
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 11V4M3 7l3-3 3 3M1 1h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        Восстановить с Drive
+        <span data-i18n="sett.gd_restore_drive">Восстановить с Drive</span>
       </button>
 
-      <div class="gd-last-backup" id="gdLastBackupEl">Нет бэкапов</div>
+      <div class="gd-last-backup" id="gdLastBackupEl" data-i18n="sett.gd_no_backups">Нет бэкапов</div>
     </div>
 
     <!-- Sync stub — v1.1 -->
     <div class="gd-sync-stub">
       <div class="gd-sync-stub-row">
-        <span class="gd-sync-stub-label">Синхронизация между устройствами</span>
+        <span class="gd-sync-stub-label" data-i18n="sett.gd_sync_title">Синхронизация между устройствами</span>
         <span class="badge-roadmap">v1.1</span>
       </div>
-      <div class="gd-intro" style="margin-bottom:0">Автосинхронизация снапшотов через Google Account. Войдите — функция станет доступна после обновления.</div>
+      <div class="gd-intro" style="margin-bottom:0" data-i18n="sett.gd_sync_desc">Автосинхронизация снапшотов через Google Account. Войдите — функция станет доступна после обновления.</div>
     </div>
   </div>
 
