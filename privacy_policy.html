@@ -18,14 +18,14 @@
 </head>
 <body>
   <h1>Privacy Policy</h1>
-  <div class="updated">Last updated: June 17, 2026</div>
+  <div class="updated">Last updated: June 21, 2026</div>
 
   <div class="highlight">
-    SessionPort stores your data in your browser's local storage (IndexedDB and chrome.storage.local). SessionPort operates no servers and receives none of your data. Optionally, you may connect Google Drive to sync your snapshots across your own devices — that data goes only to your own Google Drive account, never to us.
+    Your snapshots and AI chat content stay on your device — and, if you enable Google Drive sync, in your <em>own</em> Google Drive. SessionPort never receives the content of your snapshots. The only data SessionPort's server ever receives is basic account and subscription info, and only if you choose to sign in (see "Accounts &amp; subscription").
   </div>
 
   <h2>What we collect</h2>
-  <p>SessionPort does not collect personal information. The extension processes the following data locally on your device:</p>
+  <p>By default SessionPort collects no personal information — everything below is processed locally on your device. (If you choose to sign in or subscribe, limited account data is handled as described under "Accounts &amp; subscription".)</p>
   <ul>
     <li><strong>AI chat content</strong> — text from AI model responses (Claude, ChatGPT, Grok, Gemini, Mistral, Perplexity, DeepSeek) that you explicitly capture using the extension. This data is stored in your browser's IndexedDB and stays on your device unless you enable Google Drive sync (see below).</li>
     <li><strong>Extension settings</strong> — your preferences (theme, language, project names, hide-test toggle) stored in chrome.storage.local on your device.</li>
@@ -34,11 +34,12 @@
 
   <h2>What we do NOT collect</h2>
   <ul>
-    <li>Personal identity information (name, email, phone number)</li>
+    <li>The content of your snapshots or attached files — this never leaves your device except to your own Google Drive when you enable sync</li>
+    <li>Your name, phone number, or postal address</li>
+    <li>Passwords — sign-in (when you use it) goes through Google OAuth, so we never see your Google password</li>
+    <li>Payment card details — these are handled entirely by the payment processor; we never receive or store them</li>
     <li>Browsing history or activity outside of the supported AI platforms</li>
-    <li>Authentication credentials or passwords</li>
-    <li>Analytics, telemetry, or usage statistics</li>
-    <li>Any data transmitted to our servers (we have none)</li>
+    <li>Analytics, telemetry, advertising identifiers, or usage tracking</li>
   </ul>
 
   <h2>Data storage</h2>
@@ -54,6 +55,15 @@
     <li><strong>Google's handling</strong> of data stored in your Drive is governed by Google's Privacy Policy. SessionPort's use of Google user data complies with the Google API Services User Data Policy, including the Limited Use requirements.</li>
   </ul>
 
+  <h2>Accounts &amp; subscription (optional)</h2>
+  <p>The core extension is free and requires no account. SessionPort also offers an optional paid plan. Signing in and subscribing are entirely optional; if you never sign in, none of the data below is collected.</p>
+  <ul>
+    <li><strong>Sign-in.</strong> If you choose to sign in, SessionPort uses Google Sign-In. We receive a Google identity token and use it only to identify your account. We store a stable Google account identifier and your email address on our server (hosted on a third-party cloud platform) solely to recognize you across your devices and to record your subscription status. We never receive your Google password.</li>
+    <li><strong>Subscription &amp; payments.</strong> Purchases are processed by a third-party payment provider (for example, Apple In-App Purchase on iOS, or a web payment processor). They handle all billing and card data; SessionPort never sees your card details. Our server stores only your subscription status (e.g. free or active) and a provider transaction reference, so the app knows what you are entitled to.</li>
+    <li><strong>What our server never receives.</strong> Your snapshots, AI chat content, and attached files are <em>never</em> sent to our server. It holds account and subscription metadata only.</li>
+    <li><strong>Your control.</strong> You can sign out at any time, and request deletion of your account record by contacting us (see "Contact").</li>
+  </ul>
+
   <h2>Permissions</h2>
   <p>SessionPort requests the following Chrome permissions:</p>
   <ul>
@@ -63,13 +73,19 @@
     <li><strong>sidePanel</strong> — displays the SessionPort interface as a side panel alongside your AI chat</li>
     <li><strong>tabs</strong> — reads the current tab URL to detect the AI platform and synchronize state</li>
     <li><strong>alarms</strong> — schedules reliable background polling so capture works even if the service worker would otherwise sleep</li>
-    <li><strong>identity</strong> — used only if you connect Google Drive: obtains an OAuth token for your Google account so snapshots can sync to your own Drive</li>
+    <li><strong>identity</strong> — used only if you connect Google Drive or sign in: obtains an OAuth token for your Google account (for Drive sync and, optionally, account sign-in)</li>
     <li><strong>host permissions</strong> (chatgpt.com, claude.ai, grok.com, gemini.google.com, perplexity.ai, chat.mistral.ai, chat.deepseek.com) — required to run the content script on each supported platform to capture responses and inject context into their text editors</li>
     <li><strong>googleapis.com / oauth2.googleapis.com</strong> — used only when Google Drive sync is enabled, to read/write your snapshot files in your own Drive</li>
   </ul>
 
   <h2>Third parties</h2>
-  <p>SessionPort does not share data with, or send data to, any third parties. The extension does not include analytics libraries, crash reporters, or ad networks.</p>
+  <p>SessionPort contains no analytics libraries, crash reporters, advertising networks, or trackers, and we never sell your data. We use third-party service providers only to deliver features you explicitly opt into:</p>
+  <ul>
+    <li><strong>Google</strong> — Google Drive (when you enable sync) and Google Sign-In (when you sign in).</li>
+    <li><strong>Cloud hosting</strong> — stores the account and subscription metadata described above (only if you sign in).</li>
+    <li><strong>Payment processor</strong> — processes purchases and handles all payment data (only if you subscribe).</li>
+  </ul>
+  <p>Each provider receives only the limited data needed for that feature, and only when you use it. If you never enable sync, sign in, or subscribe, no data is shared with any third party.</p>
 
   <h2>Children</h2>
   <p>SessionPort is not directed at children under 13 and does not knowingly collect information from them.</p>
